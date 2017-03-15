@@ -45,75 +45,75 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	__webpack_require__(1);
-	
+
 	var _fs = __webpack_require__(13);
-	
+
 	var _fs2 = _interopRequireDefault(_fs);
-	
+
 	var _path = __webpack_require__(12);
-	
+
 	var _path2 = _interopRequireDefault(_path);
-	
+
 	var _electron = __webpack_require__(14);
-	
+
 	var _loginWindow = __webpack_require__(15);
-	
+
 	var _loginWindow2 = _interopRequireDefault(_loginWindow);
-	
+
 	var _mainWindow = __webpack_require__(16);
-	
+
 	var _mainWindow2 = _interopRequireDefault(_mainWindow);
-	
+
 	var _helpers = __webpack_require__(24);
-	
+
 	var _helpers2 = _interopRequireDefault(_helpers);
-	
+
 	var _inferFlash = __webpack_require__(29);
-	
+
 	var _inferFlash2 = _interopRequireDefault(_inferFlash);
-	
+
 	var _electronDl = __webpack_require__(30);
-	
+
 	var _electronDl2 = _interopRequireDefault(_electronDl);
-	
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
+
 	var isOSX = _helpers2.default.isOSX;
-	
-	
+
+
 	(0, _electronDl2.default)();
-	
+
 	var APP_ARGS_FILE_PATH = _path2.default.join(__dirname, '..', 'nativefier.json');
 	var appArgs = JSON.parse(_fs2.default.readFileSync(APP_ARGS_FILE_PATH, 'utf8'));
-	
+
 	var mainWindow = void 0;
-	
+
 	if (typeof appArgs.flashPluginDir === 'string') {
 	    _electron.app.commandLine.appendSwitch('ppapi-flash-path', appArgs.flashPluginDir);
 	} else if (appArgs.flashPluginDir) {
 	    var flashPath = (0, _inferFlash2.default)();
 	    _electron.app.commandLine.appendSwitch('ppapi-flash-path', flashPath);
 	}
-	
+
 	if (appArgs.ignoreCertificate) {
 	    _electron.app.commandLine.appendSwitch('ignore-certificate-errors');
 	}
-	
+
 	// do nothing for setDockBadge if not OSX
 	var setDockBadge = function setDockBadge() {};
-	
+
 	if (isOSX()) {
 	    setDockBadge = _electron.app.dock.setBadge;
 	}
-	
+
 	_electron.app.on('window-all-closed', function () {
 	    if (!isOSX() || appArgs.fastQuit) {
 	        _electron.app.quit();
 	    }
 	});
-	
+
 	_electron.app.on('activate', function (event, hasVisibleWindows) {
 	    if (isOSX()) {
 	        // this is called when the dock is clicked
@@ -122,24 +122,24 @@
 	        }
 	    }
 	});
-	
-	
+
+
 	_electron.app.on('before-quit', function () {
 	    // not fired when the close button on the window is clicked
 	    if (isOSX()) {
 	        // need to force a quit as a workaround here to simulate the osx app hiding behaviour
 	        // Somehow sokution at https://github.com/atom/electron/issues/444#issuecomment-76492576 does not work,
 	        // e.prevent default appears to persist
-	
+
 	        // might cause issues in the future as before-quit and will-quit events are not called
 	        _electron.app.exit(0);
 	    }
 	});
-	
+
 	//_electron.app.on('ready', function () {
 	//   mainWindow = (0, _mainWindow2.default)(appArgs, _electron.app.quit, setDockBadge);
 	//});
-	
+
 const {app, Tray, Menu} = require('electron');
 const path = require('path');
 const iconPath = path.join(__dirname, 'icon.ico');
@@ -147,70 +147,81 @@ let appIcon = null;
 
 
 _electron.app.on('ready', function () {
-	
-  mainWindow = (0, _mainWindow2.default)(appArgs, _electron.app.quit, setDockBadge);
-  
-  appIcon = new Tray(iconPath);
-  var contextMenu = Menu.buildFromTemplate([
-    {
-      label: 'Show',
-      click: function() {
-        mainWindow.show();
-      }
-    },
+
+	mainWindow = (0, _mainWindow2.default)(appArgs, _electron.app.quit, setDockBadge);
+
+	appIcon = new Tray(iconPath);
+	var contextMenu = Menu.buildFromTemplate([
 	{
-      label: 'Hide',
-      click: function() {
+	  label: 'Show',
+	  click: function() {
+		mainWindow.show();
+	  }
+	},
+	{
+	  label: 'Hide',
+	  click: function() {
 		mainWindow.hide();
-      }
-    },
-    { 
+	  }
+	},
+	{
 	  label: 'Quit',
 	  click: function() {
 		_electron.app.exit(0);
 	  }
 	}
-  ]);
-  
-  appIcon.on('double-click', () => {
-    mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()
-  });
+	]);
 
-  appIcon.setToolTip('Threema Web Client v1.0');
-  appIcon.setContextMenu(contextMenu);
-  mainWindow.openDevTools();
+	appIcon.on('double-click', () => {
+		mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()
+	});
+
+	appIcon.setToolTip('Threema Web Client v1.0');
+	appIcon.setContextMenu(contextMenu);
+    //mainWindow.openDevTools();
 });
-  
-	
-	_electron.app.on('login', function (event, webContents, request, authInfo, callback) {
-	    // for http authentication
-	    event.preventDefault();
-	    (0, _loginWindow2.default)(callback);
-	});
 
 
 	
-	_electron.ipcMain.on('notification', function (e, msg) {
+_electron.ipcMain.on('notification', function (e, msg) {
+
+	if (!isOSX() || mainWindow.isFocused()) {
+		const notifier = require('electron-notifications')
+		  var msg = msg.replace(/Threema/i, '');
+		  const notification = notifier.notify('', {
+		  message: msg,
+		  icon: iconPath,
+		  duration: "30000",
+		  flat: false,
+		  buttons: mainWindow.isVisible() ? ['Close'] : ['Show', 'Close'],	  
+		})
 		
-			const notifier = require('electron-notifications')
-			// Just title 
-			notifier.notify('test', {
-			  message: msg,
-			  icon: iconPath,
-			  buttons: ['Dismiss'],
-			})
-			console.log(msg, msg.title, msg.body)
-			
-	    //if (!isOSX() || mainWindow.isFocused()) {
-	        //return;
-	    //}
-	    //setDockBadge('●');
-	});
+		notification.on('buttonClicked', (text, buttonIndex, options) => {	
+			if (text === 'Show') {
+				if (!mainWindow.isVisible()) {
+					mainWindow.show();
+					notification.close()	
+				}
+			}
+			else if (text === 'Close') {
+				notification.close()	
+			}
+		})
+		return;
+	}
+	setDockBadge('●');
+});
 
-	
 
-	
-	
+
+_electron.app.on('login', function (event, webContents, request, authInfo, callback) {
+	// for http authentication
+	event.preventDefault();
+	(0, _loginWindow2.default)(callback);
+});
+
+
+
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
@@ -225,30 +236,30 @@ _electron.app.on('ready', function () {
 	var SourceMapConsumer = __webpack_require__(3).SourceMapConsumer;
 	var path = __webpack_require__(12);
 	var fs = __webpack_require__(13);
-	
+
 	// Only install once if called multiple times
 	var errorFormatterInstalled = false;
 	var uncaughtShimInstalled = false;
-	
+
 	// If true, the caches are reset before a stack trace formatting operation
 	var emptyCacheBetweenOperations = false;
-	
+
 	// Supports {browser, node, auto}
 	var environment = "auto";
-	
+
 	// Maps a file path to a string containing the file contents
 	var fileContentsCache = {};
-	
+
 	// Maps a file path to a source map for that file
 	var sourceMapCache = {};
-	
+
 	// Regex for detecting source maps
 	var reSourceMap = /^data:application\/json[^,]+base64,/;
-	
+
 	// Priority list of retrieve handlers
 	var retrieveFileHandlers = [];
 	var retrieveMapHandlers = [];
-	
+
 	function isInBrowser() {
 	  if (environment === "browser")
 	    return true;
@@ -256,11 +267,11 @@ _electron.app.on('ready', function () {
 	    return false;
 	  return ((typeof window !== 'undefined') && (typeof XMLHttpRequest === 'function'));
 	}
-	
+
 	function hasGlobalProcessEventEmitter() {
 	  return ((typeof process === 'object') && (process !== null) && (typeof process.on === 'function'));
 	}
-	
+
 	function handlerExec(list) {
 	  return function(arg) {
 	    for (var i = 0; i < list.length; i++) {
@@ -272,16 +283,16 @@ _electron.app.on('ready', function () {
 	    return null;
 	  };
 	}
-	
+
 	var retrieveFile = handlerExec(retrieveFileHandlers);
-	
+
 	retrieveFileHandlers.push(function(path) {
 	  // Trim the path to make sure there is no extra whitespace.
 	  path = path.trim();
 	  if (path in fileContentsCache) {
 	    return fileContentsCache[path];
 	  }
-	
+
 	  try {
 	    // Use SJAX if we are in the browser
 	    if (isInBrowser()) {
@@ -293,7 +304,7 @@ _electron.app.on('ready', function () {
 	        contents = xhr.responseText
 	      }
 	    }
-	
+
 	    // Otherwise, use the filesystem
 	    else {
 	      var contents = fs.readFileSync(path, 'utf8');
@@ -301,10 +312,10 @@ _electron.app.on('ready', function () {
 	  } catch (e) {
 	    var contents = null;
 	  }
-	
+
 	  return fileContentsCache[path] = contents;
 	});
-	
+
 	// Support URLs relative to a directory, but be careful about a protocol prefix
 	// in case we are in the browser (i.e. directories may start with "http://")
 	function supportRelativeURL(file, url) {
@@ -314,16 +325,16 @@ _electron.app.on('ready', function () {
 	  var protocol = match ? match[0] : '';
 	  return protocol + path.resolve(dir.slice(protocol.length), url);
 	}
-	
+
 	function retrieveSourceMapURL(source) {
 	  var fileData;
-	
+
 	  if (isInBrowser()) {
 	    var xhr = new XMLHttpRequest();
 	    xhr.open('GET', source, false);
 	    xhr.send(null);
 	    fileData = xhr.readyState === 4 ? xhr.responseText : null;
-	
+
 	    // Support providing a sourceMappingURL via the SourceMap header
 	    var sourceMapHeader = xhr.getResponseHeader("SourceMap") ||
 	                          xhr.getResponseHeader("X-SourceMap");
@@ -331,7 +342,7 @@ _electron.app.on('ready', function () {
 	      return sourceMapHeader;
 	    }
 	  }
-	
+
 	  // Get the URL of the source map
 	  fileData = retrieveFile(source);
 	  //        //# sourceMappingURL=foo.js.map                       /*# sourceMappingURL=foo.js.map */
@@ -343,7 +354,7 @@ _electron.app.on('ready', function () {
 	  if (!lastMatch) return null;
 	  return lastMatch[1];
 	};
-	
+
 	// Can be overridden by the retrieveSourceMap option to install. Takes a
 	// generated source filename; returns a {map, optional url} object, or null if
 	// there is no source map.  The map field may be either a string or the parsed
@@ -353,7 +364,7 @@ _electron.app.on('ready', function () {
 	retrieveMapHandlers.push(function(source) {
 	  var sourceMappingURL = retrieveSourceMapURL(source);
 	  if (!sourceMappingURL) return null;
-	
+
 	  // Read the contents of the source map
 	  var sourceMapData;
 	  if (reSourceMap.test(sourceMappingURL)) {
@@ -366,17 +377,17 @@ _electron.app.on('ready', function () {
 	    sourceMappingURL = supportRelativeURL(source, sourceMappingURL);
 	    sourceMapData = retrieveFile(sourceMappingURL);
 	  }
-	
+
 	  if (!sourceMapData) {
 	    return null;
 	  }
-	
+
 	  return {
 	    url: sourceMappingURL,
 	    map: sourceMapData
 	  };
 	});
-	
+
 	function mapSourcePosition(position) {
 	  var sourceMap = sourceMapCache[position.source];
 	  if (!sourceMap) {
@@ -387,7 +398,7 @@ _electron.app.on('ready', function () {
 	        url: urlAndMap.url,
 	        map: new SourceMapConsumer(urlAndMap.map)
 	      };
-	
+
 	      // Load all sources stored inline with the source map into the file cache
 	      // to pretend like they are already loaded. They may not exist on disk.
 	      if (sourceMap.map.sourcesContent) {
@@ -406,11 +417,11 @@ _electron.app.on('ready', function () {
 	      };
 	    }
 	  }
-	
+
 	  // Resolve the source URL relative to the URL of the source map
 	  if (sourceMap && sourceMap.map) {
 	    var originalPosition = sourceMap.map.originalPositionFor(position);
-	
+
 	    // Only return the original position if a matching line was found. If no
 	    // matching line is found then we return position instead, which will cause
 	    // the stack trace to print the path and line for the compiled file. It is
@@ -422,10 +433,10 @@ _electron.app.on('ready', function () {
 	      return originalPosition;
 	    }
 	  }
-	
+
 	  return position;
 	}
-	
+
 	// Parses code generated by FormatEvalOrigin(), a function inside V8:
 	// https://code.google.com/p/v8/source/browse/trunk/src/messages.js
 	function mapEvalOrigin(origin) {
@@ -440,17 +451,17 @@ _electron.app.on('ready', function () {
 	    return 'eval at ' + match[1] + ' (' + position.source + ':' +
 	      position.line + ':' + (position.column + 1) + ')';
 	  }
-	
+
 	  // Parse nested eval() calls using recursion
 	  match = /^eval at ([^(]+) \((.+)\)$/.exec(origin);
 	  if (match) {
 	    return 'eval at ' + match[1] + ' (' + mapEvalOrigin(match[2]) + ')';
 	  }
-	
+
 	  // Make sure we still return useful information if we didn't find anything
 	  return origin;
 	}
-	
+
 	// This is copied almost verbatim from the V8 source code at
 	// https://code.google.com/p/v8/source/browse/trunk/src/messages.js. The
 	// implementation of wrapCallSite() used to just forward to the actual source
@@ -468,7 +479,7 @@ _electron.app.on('ready', function () {
 	      fileLocation = this.getEvalOrigin();
 	      fileLocation += ", ";  // Expecting source position to follow.
 	    }
-	
+
 	    if (fileName) {
 	      fileLocation += fileName;
 	    } else {
@@ -486,7 +497,7 @@ _electron.app.on('ready', function () {
 	      }
 	    }
 	  }
-	
+
 	  var line = "";
 	  var functionName = this.getFunctionName();
 	  var addSuffix = true;
@@ -519,7 +530,7 @@ _electron.app.on('ready', function () {
 	  }
 	  return line;
 	}
-	
+
 	function cloneCallSite(frame) {
 	  var object = {};
 	  Object.getOwnPropertyNames(Object.getPrototypeOf(frame)).forEach(function(name) {
@@ -528,7 +539,7 @@ _electron.app.on('ready', function () {
 	  object.toString = CallSiteToString;
 	  return object;
 	}
-	
+
 	function wrapCallSite(frame) {
 	  // Most call sites will return the source file from getFileName(), but code
 	  // passed to eval() ending in "//# sourceURL=..." will return the source file
@@ -537,13 +548,13 @@ _electron.app.on('ready', function () {
 	  if (source) {
 	    var line = frame.getLineNumber();
 	    var column = frame.getColumnNumber() - 1;
-	
+
 	    // Fix position in Node where some (internal) code is prepended.
 	    // See https://github.com/evanw/node-source-map-support/issues/36
 	    if (line === 1 && !isInBrowser() && !frame.isEval()) {
 	      column -= 62;
 	    }
-	
+
 	    var position = mapSourcePosition({
 	      source: source,
 	      line: line,
@@ -556,7 +567,7 @@ _electron.app.on('ready', function () {
 	    frame.getScriptNameOrSourceURL = function() { return position.source; };
 	    return frame;
 	  }
-	
+
 	  // Code called using eval() needs special handling
 	  var origin = frame.isEval() && frame.getEvalOrigin();
 	  if (origin) {
@@ -565,11 +576,11 @@ _electron.app.on('ready', function () {
 	    frame.getEvalOrigin = function() { return origin; };
 	    return frame;
 	  }
-	
+
 	  // If we get here then we were unable to change the source position
 	  return frame;
 	}
-	
+
 	// This function is part of the V8 stack trace API, for more info see:
 	// http://code.google.com/p/v8/wiki/JavaScriptStackTraceApi
 	function prepareStackTrace(error, stack) {
@@ -577,12 +588,12 @@ _electron.app.on('ready', function () {
 	    fileContentsCache = {};
 	    sourceMapCache = {};
 	  }
-	
+
 	  return error + stack.map(function(frame) {
 	    return '\n    at ' + wrapCallSite(frame);
 	  }).join('');
 	}
-	
+
 	// Generate position and snippet of original source with pointer
 	function getErrorSource(error) {
 	  var match = /\n    at [^(]+ \((.*):(\d+):(\d+)\)/.exec(error.stack);
@@ -590,15 +601,15 @@ _electron.app.on('ready', function () {
 	    var source = match[1];
 	    var line = +match[2];
 	    var column = +match[3];
-	
+
 	    // Support the inline sourceContents inside the source map
 	    var contents = fileContentsCache[source];
-	
+
 	    // Support files on disk
 	    if (!contents && fs.existsSync(source)) {
 	      contents = fs.readFileSync(source, 'utf8');
 	    }
-	
+
 	    // Format the line from the original source code like node does
 	    if (contents) {
 	      var code = contents.split(/(?:\r\n|\r|\n)/)[line - 1];
@@ -610,87 +621,87 @@ _electron.app.on('ready', function () {
 	  }
 	  return null;
 	}
-	
+
 	function printErrorAndExit (error) {
 	  var source = getErrorSource(error);
-	
+
 	  if (source) {
 	    console.error();
 	    console.error(source);
 	  }
-	
+
 	  console.error(error.stack);
 	  process.exit(1);
 	}
-	
+
 	function shimEmitUncaughtException () {
 	  var origEmit = process.emit;
-	
+
 	  process.emit = function (type) {
 	    if (type === 'uncaughtException') {
 	      var hasStack = (arguments[1] && arguments[1].stack);
 	      var hasListeners = (this.listeners(type).length > 0);
-	
+
 	      if (hasStack && !hasListeners) {
 	        return printErrorAndExit(arguments[1]);
 	      }
 	    }
-	
+
 	    return origEmit.apply(this, arguments);
 	  };
 	}
-	
+
 	exports.wrapCallSite = wrapCallSite;
 	exports.getErrorSource = getErrorSource;
 	exports.mapSourcePosition = mapSourcePosition;
 	exports.retrieveSourceMap = retrieveSourceMap;
-	
+
 	exports.install = function(options) {
 	  options = options || {};
-	
+
 	  if (options.environment) {
 	    environment = options.environment;
 	    if (["node", "browser", "auto"].indexOf(environment) === -1) {
 	      throw new Error("environment " + environment + " was unknown. Available options are {auto, browser, node}")
 	    }
 	  }
-	
+
 	  // Allow sources to be found by methods other than reading the files
 	  // directly from disk.
 	  if (options.retrieveFile) {
 	    if (options.overrideRetrieveFile) {
 	      retrieveFileHandlers.length = 0;
 	    }
-	
+
 	    retrieveFileHandlers.unshift(options.retrieveFile);
 	  }
-	
+
 	  // Allow source maps to be found by methods other than reading the files
 	  // directly from disk.
 	  if (options.retrieveSourceMap) {
 	    if (options.overrideRetrieveSourceMap) {
 	      retrieveMapHandlers.length = 0;
 	    }
-	
+
 	    retrieveMapHandlers.unshift(options.retrieveSourceMap);
 	  }
-	
+
 	  // Configure options
 	  if (!emptyCacheBetweenOperations) {
 	    emptyCacheBetweenOperations = 'emptyCacheBetweenOperations' in options ?
 	      options.emptyCacheBetweenOperations : false;
 	  }
-	
+
 	  // Install the error reformatter
 	  if (!errorFormatterInstalled) {
 	    errorFormatterInstalled = true;
 	    Error.prepareStackTrace = prepareStackTrace;
 	  }
-	
+
 	  if (!uncaughtShimInstalled) {
 	    var installHandler = 'handleUncaughtExceptions' in options ?
 	      options.handleUncaughtExceptions : true;
-	
+
 	    // Provide the option to not install the uncaught exception handler. This is
 	    // to support other uncaught exception handlers (in test frameworks, for
 	    // example). If this handler is not installed and there are no other uncaught
@@ -734,11 +745,11 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  var base64VLQ = __webpack_require__(5);
 	  var util = __webpack_require__(7);
 	  var ArraySet = __webpack_require__(8).ArraySet;
-	
+
 	  /**
 	   * An instance of the SourceMapGenerator represents a source map which is
 	   * being built incrementally. To create a new one, you must pass an object
@@ -755,9 +766,9 @@ _electron.app.on('ready', function () {
 	    this._mappings = [];
 	    this._sourcesContents = null;
 	  }
-	
+
 	  SourceMapGenerator.prototype._version = 3;
-	
+
 	  /**
 	   * Creates a new SourceMapGenerator based on a SourceMapConsumer
 	   *
@@ -777,23 +788,23 @@ _electron.app.on('ready', function () {
 	            column: mapping.generatedColumn
 	          }
 	        };
-	
+
 	        if (mapping.source) {
 	          newMapping.source = mapping.source;
 	          if (sourceRoot) {
 	            newMapping.source = util.relative(sourceRoot, newMapping.source);
 	          }
-	
+
 	          newMapping.original = {
 	            line: mapping.originalLine,
 	            column: mapping.originalColumn
 	          };
-	
+
 	          if (mapping.name) {
 	            newMapping.name = mapping.name;
 	          }
 	        }
-	
+
 	        generator.addMapping(newMapping);
 	      });
 	      aSourceMapConsumer.sources.forEach(function (sourceFile) {
@@ -804,7 +815,7 @@ _electron.app.on('ready', function () {
 	      });
 	      return generator;
 	    };
-	
+
 	  /**
 	   * Add a single mapping from original source line and column to the generated
 	   * source's line and column for this source map being created. The mapping
@@ -821,17 +832,17 @@ _electron.app.on('ready', function () {
 	      var original = util.getArg(aArgs, 'original', null);
 	      var source = util.getArg(aArgs, 'source', null);
 	      var name = util.getArg(aArgs, 'name', null);
-	
+
 	      this._validateMapping(generated, original, source, name);
-	
+
 	      if (source && !this._sources.has(source)) {
 	        this._sources.add(source);
 	      }
-	
+
 	      if (name && !this._names.has(name)) {
 	        this._names.add(name);
 	      }
-	
+
 	      this._mappings.push({
 	        generatedLine: generated.line,
 	        generatedColumn: generated.column,
@@ -841,7 +852,7 @@ _electron.app.on('ready', function () {
 	        name: name
 	      });
 	    };
-	
+
 	  /**
 	   * Set the source content for a source file.
 	   */
@@ -851,7 +862,7 @@ _electron.app.on('ready', function () {
 	      if (this._sourceRoot) {
 	        source = util.relative(this._sourceRoot, source);
 	      }
-	
+
 	      if (aSourceContent !== null) {
 	        // Add the source content to the _sourcesContents map.
 	        // Create a new _sourcesContents map if the property is null.
@@ -868,7 +879,7 @@ _electron.app.on('ready', function () {
 	        }
 	      }
 	    };
-	
+
 	  /**
 	   * Applies the mappings of a sub-source-map for a specific source file to the
 	   * source map being generated. Each mapping to the supplied source file is
@@ -894,7 +905,7 @@ _electron.app.on('ready', function () {
 	      // the names array.
 	      var newSources = new ArraySet();
 	      var newNames = new ArraySet();
-	
+
 	      // Find mappings for the "aSourceFile"
 	      this._mappings.forEach(function (mapping) {
 	        if (mapping.source === aSourceFile && mapping.originalLine) {
@@ -919,21 +930,21 @@ _electron.app.on('ready', function () {
 	            }
 	          }
 	        }
-	
+
 	        var source = mapping.source;
 	        if (source && !newSources.has(source)) {
 	          newSources.add(source);
 	        }
-	
+
 	        var name = mapping.name;
 	        if (name && !newNames.has(name)) {
 	          newNames.add(name);
 	        }
-	
+
 	      }, this);
 	      this._sources = newSources;
 	      this._names = newNames;
-	
+
 	      // Copy sourcesContents of applied map.
 	      aSourceMapConsumer.sources.forEach(function (sourceFile) {
 	        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
@@ -945,7 +956,7 @@ _electron.app.on('ready', function () {
 	        }
 	      }, this);
 	    };
-	
+
 	  /**
 	   * A mapping can have one of the three levels of data:
 	   *
@@ -983,7 +994,7 @@ _electron.app.on('ready', function () {
 	        }));
 	      }
 	    };
-	
+
 	  /**
 	   * Serialize the accumulated mappings in to the stream of base 64 VLQs
 	   * specified by the source map format.
@@ -998,17 +1009,17 @@ _electron.app.on('ready', function () {
 	      var previousSource = 0;
 	      var result = '';
 	      var mapping;
-	
+
 	      // The mappings must be guaranteed to be in sorted order before we start
 	      // serializing them or else the generated line numbers (which are defined
 	      // via the ';' separators) will be all messed up. Note: it might be more
 	      // performant to maintain the sorting as we insert them, rather than as we
 	      // serialize them, but the big O is the same either way.
 	      this._mappings.sort(util.compareByGeneratedPositions);
-	
+
 	      for (var i = 0, len = this._mappings.length; i < len; i++) {
 	        mapping = this._mappings[i];
-	
+
 	        if (mapping.generatedLine !== previousGeneratedLine) {
 	          previousGeneratedColumn = 0;
 	          while (mapping.generatedLine !== previousGeneratedLine) {
@@ -1024,25 +1035,25 @@ _electron.app.on('ready', function () {
 	            result += ',';
 	          }
 	        }
-	
+
 	        result += base64VLQ.encode(mapping.generatedColumn
 	                                   - previousGeneratedColumn);
 	        previousGeneratedColumn = mapping.generatedColumn;
-	
+
 	        if (mapping.source) {
 	          result += base64VLQ.encode(this._sources.indexOf(mapping.source)
 	                                     - previousSource);
 	          previousSource = this._sources.indexOf(mapping.source);
-	
+
 	          // lines are stored 0-based in SourceMap spec version 3
 	          result += base64VLQ.encode(mapping.originalLine - 1
 	                                     - previousOriginalLine);
 	          previousOriginalLine = mapping.originalLine - 1;
-	
+
 	          result += base64VLQ.encode(mapping.originalColumn
 	                                     - previousOriginalColumn);
 	          previousOriginalColumn = mapping.originalColumn;
-	
+
 	          if (mapping.name) {
 	            result += base64VLQ.encode(this._names.indexOf(mapping.name)
 	                                       - previousName);
@@ -1050,10 +1061,10 @@ _electron.app.on('ready', function () {
 	          }
 	        }
 	      }
-	
+
 	      return result;
 	    };
-	
+
 	  SourceMapGenerator.prototype._generateSourcesContent =
 	    function SourceMapGenerator_generateSourcesContent(aSources, aSourceRoot) {
 	      return aSources.map(function (source) {
@@ -1070,7 +1081,7 @@ _electron.app.on('ready', function () {
 	          : null;
 	      }, this);
 	    };
-	
+
 	  /**
 	   * Externalize the source map.
 	   */
@@ -1089,10 +1100,10 @@ _electron.app.on('ready', function () {
 	      if (this._sourcesContents) {
 	        map.sourcesContent = this._generateSourcesContent(map.sources, map.sourceRoot);
 	      }
-	
+
 	      return map;
 	    };
-	
+
 	  /**
 	   * Render the source map being generated to a string.
 	   */
@@ -1100,9 +1111,9 @@ _electron.app.on('ready', function () {
 	    function SourceMapGenerator_toString() {
 	      return JSON.stringify(this);
 	    };
-	
+
 	  exports.SourceMapGenerator = SourceMapGenerator;
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -1150,9 +1161,9 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  var base64 = __webpack_require__(6);
-	
+
 	  // A single base 64 digit can contain 6 bits of data. For the base 64 variable
 	  // length quantities we use in the source map spec, the first bit is the sign,
 	  // the next four bits are the actual value, and the 6th bit is the
@@ -1164,18 +1175,18 @@ _electron.app.on('ready', function () {
 	  //   |    |
 	  //   V    V
 	  //   101011
-	
+
 	  var VLQ_BASE_SHIFT = 5;
-	
+
 	  // binary: 100000
 	  var VLQ_BASE = 1 << VLQ_BASE_SHIFT;
-	
+
 	  // binary: 011111
 	  var VLQ_BASE_MASK = VLQ_BASE - 1;
-	
+
 	  // binary: 100000
 	  var VLQ_CONTINUATION_BIT = VLQ_BASE;
-	
+
 	  /**
 	   * Converts from a two-complement value to a value where the sign bit is
 	   * is placed in the least significant bit.  For example, as decimals:
@@ -1187,7 +1198,7 @@ _electron.app.on('ready', function () {
 	      ? ((-aValue) << 1) + 1
 	      : (aValue << 1) + 0;
 	  }
-	
+
 	  /**
 	   * Converts to a two-complement value from a value where the sign bit is
 	   * is placed in the least significant bit.  For example, as decimals:
@@ -1201,16 +1212,16 @@ _electron.app.on('ready', function () {
 	      ? -shifted
 	      : shifted;
 	  }
-	
+
 	  /**
 	   * Returns the base 64 VLQ encoded value.
 	   */
 	  exports.encode = function base64VLQ_encode(aValue) {
 	    var encoded = "";
 	    var digit;
-	
+
 	    var vlq = toVLQSigned(aValue);
-	
+
 	    do {
 	      digit = vlq & VLQ_BASE_MASK;
 	      vlq >>>= VLQ_BASE_SHIFT;
@@ -1221,10 +1232,10 @@ _electron.app.on('ready', function () {
 	      }
 	      encoded += base64.encode(digit);
 	    } while (vlq > 0);
-	
+
 	    return encoded;
 	  };
-	
+
 	  /**
 	   * Decodes the next base 64 VLQ value from the given string and returns the
 	   * value and the rest of the string.
@@ -1235,7 +1246,7 @@ _electron.app.on('ready', function () {
 	    var result = 0;
 	    var shift = 0;
 	    var continuation, digit;
-	
+
 	    do {
 	      if (i >= strLen) {
 	        throw new Error("Expected more digits in base 64 VLQ value.");
@@ -1246,13 +1257,13 @@ _electron.app.on('ready', function () {
 	      result = result + (digit << shift);
 	      shift += VLQ_BASE_SHIFT;
 	    } while (continuation);
-	
+
 	    return {
 	      value: fromVLQSigned(result),
 	      rest: aStr.slice(i)
 	    };
 	  };
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -1270,17 +1281,17 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  var charToIntMap = {};
 	  var intToCharMap = {};
-	
+
 	  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 	    .split('')
 	    .forEach(function (ch, index) {
 	      charToIntMap[ch] = index;
 	      intToCharMap[index] = ch;
 	    });
-	
+
 	  /**
 	   * Encode an integer in the range of 0 to 63 to a single base 64 digit.
 	   */
@@ -1290,7 +1301,7 @@ _electron.app.on('ready', function () {
 	    }
 	    throw new TypeError("Must be between 0 and 63: " + aNumber);
 	  };
-	
+
 	  /**
 	   * Decode a single base 64 digit to an integer.
 	   */
@@ -1300,7 +1311,7 @@ _electron.app.on('ready', function () {
 	    }
 	    throw new TypeError("Not a valid base 64 digit: " + aChar);
 	  };
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -1318,7 +1329,7 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  /**
 	   * This is a helper function for getting values from parameter/options
 	   * objects.
@@ -1339,10 +1350,10 @@ _electron.app.on('ready', function () {
 	    }
 	  }
 	  exports.getArg = getArg;
-	
+
 	  var urlRegexp = /([\w+\-.]+):\/\/((\w+:\w+)@)?([\w.]+)?(:(\d+))?(\S+)?/;
 	  var dataUrlRegexp = /^data:.+\,.+/;
-	
+
 	  function urlParse(aUrl) {
 	    var match = aUrl.match(urlRegexp);
 	    if (!match) {
@@ -1357,7 +1368,7 @@ _electron.app.on('ready', function () {
 	    };
 	  }
 	  exports.urlParse = urlParse;
-	
+
 	  function urlGenerate(aParsedUrl) {
 	    var url = aParsedUrl.scheme + "://";
 	    if (aParsedUrl.auth) {
@@ -1375,23 +1386,23 @@ _electron.app.on('ready', function () {
 	    return url;
 	  }
 	  exports.urlGenerate = urlGenerate;
-	
+
 	  function join(aRoot, aPath) {
 	    var url;
-	
+
 	    if (aPath.match(urlRegexp) || aPath.match(dataUrlRegexp)) {
 	      return aPath;
 	    }
-	
+
 	    if (aPath.charAt(0) === '/' && (url = urlParse(aRoot))) {
 	      url.path = aPath;
 	      return urlGenerate(url);
 	    }
-	
+
 	    return aRoot.replace(/\/$/, '') + '/' + aPath;
 	  }
 	  exports.join = join;
-	
+
 	  /**
 	   * Because behavior goes wacky when you set `__proto__` on objects, we
 	   * have to prefix all the strings in our set with an arbitrary character.
@@ -1405,32 +1416,32 @@ _electron.app.on('ready', function () {
 	    return '$' + aStr;
 	  }
 	  exports.toSetString = toSetString;
-	
+
 	  function fromSetString(aStr) {
 	    return aStr.substr(1);
 	  }
 	  exports.fromSetString = fromSetString;
-	
+
 	  function relative(aRoot, aPath) {
 	    aRoot = aRoot.replace(/\/$/, '');
-	
+
 	    var url = urlParse(aRoot);
 	    if (aPath.charAt(0) == "/" && url && url.path == "/") {
 	      return aPath.slice(1);
 	    }
-	
+
 	    return aPath.indexOf(aRoot + '/') === 0
 	      ? aPath.substr(aRoot.length + 1)
 	      : aPath;
 	  }
 	  exports.relative = relative;
-	
+
 	  function strcmp(aStr1, aStr2) {
 	    var s1 = aStr1 || "";
 	    var s2 = aStr2 || "";
 	    return (s1 > s2) - (s1 < s2);
 	  }
-	
+
 	  /**
 	   * Comparator between two mappings where the original positions are compared.
 	   *
@@ -1441,36 +1452,36 @@ _electron.app.on('ready', function () {
 	   */
 	  function compareByOriginalPositions(mappingA, mappingB, onlyCompareOriginal) {
 	    var cmp;
-	
+
 	    cmp = strcmp(mappingA.source, mappingB.source);
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    cmp = mappingA.originalLine - mappingB.originalLine;
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    cmp = mappingA.originalColumn - mappingB.originalColumn;
 	    if (cmp || onlyCompareOriginal) {
 	      return cmp;
 	    }
-	
+
 	    cmp = strcmp(mappingA.name, mappingB.name);
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    cmp = mappingA.generatedLine - mappingB.generatedLine;
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    return mappingA.generatedColumn - mappingB.generatedColumn;
 	  };
 	  exports.compareByOriginalPositions = compareByOriginalPositions;
-	
+
 	  /**
 	   * Comparator between two mappings where the generated positions are
 	   * compared.
@@ -1482,36 +1493,36 @@ _electron.app.on('ready', function () {
 	   */
 	  function compareByGeneratedPositions(mappingA, mappingB, onlyCompareGenerated) {
 	    var cmp;
-	
+
 	    cmp = mappingA.generatedLine - mappingB.generatedLine;
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    cmp = mappingA.generatedColumn - mappingB.generatedColumn;
 	    if (cmp || onlyCompareGenerated) {
 	      return cmp;
 	    }
-	
+
 	    cmp = strcmp(mappingA.source, mappingB.source);
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    cmp = mappingA.originalLine - mappingB.originalLine;
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    cmp = mappingA.originalColumn - mappingB.originalColumn;
 	    if (cmp) {
 	      return cmp;
 	    }
-	
+
 	    return strcmp(mappingA.name, mappingB.name);
 	  };
 	  exports.compareByGeneratedPositions = compareByGeneratedPositions;
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -1529,9 +1540,9 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  var util = __webpack_require__(7);
-	
+
 	  /**
 	   * A data structure which is a combination of an array and a set. Adding a new
 	   * member is O(1), testing for membership is O(1), and finding the index of an
@@ -1542,7 +1553,7 @@ _electron.app.on('ready', function () {
 	    this._array = [];
 	    this._set = {};
 	  }
-	
+
 	  /**
 	   * Static method for creating ArraySet instances from an existing array.
 	   */
@@ -1553,7 +1564,7 @@ _electron.app.on('ready', function () {
 	    }
 	    return set;
 	  };
-	
+
 	  /**
 	   * Add the given string to this set.
 	   *
@@ -1569,7 +1580,7 @@ _electron.app.on('ready', function () {
 	      this._set[util.toSetString(aStr)] = idx;
 	    }
 	  };
-	
+
 	  /**
 	   * Is the given string a member of this set?
 	   *
@@ -1579,7 +1590,7 @@ _electron.app.on('ready', function () {
 	    return Object.prototype.hasOwnProperty.call(this._set,
 	                                                util.toSetString(aStr));
 	  };
-	
+
 	  /**
 	   * What is the index of the given string in the array?
 	   *
@@ -1591,7 +1602,7 @@ _electron.app.on('ready', function () {
 	    }
 	    throw new Error('"' + aStr + '" is not in the set.');
 	  };
-	
+
 	  /**
 	   * What is the element at the given index?
 	   *
@@ -1603,7 +1614,7 @@ _electron.app.on('ready', function () {
 	    }
 	    throw new Error('No element indexed by ' + aIdx);
 	  };
-	
+
 	  /**
 	   * Returns the array representation of this set (which has the proper indices
 	   * indicated by indexOf). Note that this is a copy of the internal array used
@@ -1612,9 +1623,9 @@ _electron.app.on('ready', function () {
 	  ArraySet.prototype.toArray = function ArraySet_toArray() {
 	    return this._array.slice();
 	  };
-	
+
 	  exports.ArraySet = ArraySet;
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -1632,12 +1643,12 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  var util = __webpack_require__(7);
 	  var binarySearch = __webpack_require__(10);
 	  var ArraySet = __webpack_require__(8).ArraySet;
 	  var base64VLQ = __webpack_require__(5);
-	
+
 	  /**
 	   * A SourceMapConsumer instance represents a parsed source map which we can
 	   * query for information about the original file positions by giving it a file
@@ -1673,7 +1684,7 @@ _electron.app.on('ready', function () {
 	    if (typeof aSourceMap === 'string') {
 	      sourceMap = JSON.parse(aSourceMap.replace(/^\)\]\}'/, ''));
 	    }
-	
+
 	    var version = util.getArg(sourceMap, 'version');
 	    var sources = util.getArg(sourceMap, 'sources');
 	    // Sass 3.3 leaves out the 'names' array, so we deviate from the spec (which
@@ -1683,26 +1694,26 @@ _electron.app.on('ready', function () {
 	    var sourcesContent = util.getArg(sourceMap, 'sourcesContent', null);
 	    var mappings = util.getArg(sourceMap, 'mappings');
 	    var file = util.getArg(sourceMap, 'file', null);
-	
+
 	    // Once again, Sass deviates from the spec and supplies the version as a
 	    // string rather than a number, so we use loose equality checking here.
 	    if (version != this._version) {
 	      throw new Error('Unsupported version: ' + version);
 	    }
-	
+
 	    // Pass `true` below to allow duplicate names and sources. While source maps
 	    // are intended to be compressed and deduplicated, the TypeScript compiler
 	    // sometimes generates source maps with duplicates in them. See Github issue
 	    // #72 and bugzil.la/889492.
 	    this._names = ArraySet.fromArray(names, true);
 	    this._sources = ArraySet.fromArray(sources, true);
-	
+
 	    this.sourceRoot = sourceRoot;
 	    this.sourcesContent = sourcesContent;
 	    this._mappings = mappings;
 	    this.file = file;
 	  }
-	
+
 	  /**
 	   * Create a SourceMapConsumer from a SourceMapGenerator.
 	   *
@@ -1713,27 +1724,27 @@ _electron.app.on('ready', function () {
 	  SourceMapConsumer.fromSourceMap =
 	    function SourceMapConsumer_fromSourceMap(aSourceMap) {
 	      var smc = Object.create(SourceMapConsumer.prototype);
-	
+
 	      smc._names = ArraySet.fromArray(aSourceMap._names.toArray(), true);
 	      smc._sources = ArraySet.fromArray(aSourceMap._sources.toArray(), true);
 	      smc.sourceRoot = aSourceMap._sourceRoot;
 	      smc.sourcesContent = aSourceMap._generateSourcesContent(smc._sources.toArray(),
 	                                                              smc.sourceRoot);
 	      smc.file = aSourceMap._file;
-	
+
 	      smc.__generatedMappings = aSourceMap._mappings.slice()
 	        .sort(util.compareByGeneratedPositions);
 	      smc.__originalMappings = aSourceMap._mappings.slice()
 	        .sort(util.compareByOriginalPositions);
-	
+
 	      return smc;
 	    };
-	
+
 	  /**
 	   * The version of the source mapping spec that we are consuming.
 	   */
 	  SourceMapConsumer.prototype._version = 3;
-	
+
 	  /**
 	   * The list of original sources.
 	   */
@@ -1744,7 +1755,7 @@ _electron.app.on('ready', function () {
 	      }, this);
 	    }
 	  });
-	
+
 	  // `__generatedMappings` and `__originalMappings` are arrays that hold the
 	  // parsed mapping coordinates from the source map's "mappings" attribute. They
 	  // are lazily instantiated, accessed via the `_generatedMappings` and
@@ -1774,7 +1785,7 @@ _electron.app.on('ready', function () {
 	  // `_generatedMappings` is ordered by the generated positions.
 	  //
 	  // `_originalMappings` is ordered by the original positions.
-	
+
 	  SourceMapConsumer.prototype.__generatedMappings = null;
 	  Object.defineProperty(SourceMapConsumer.prototype, '_generatedMappings', {
 	    get: function () {
@@ -1783,11 +1794,11 @@ _electron.app.on('ready', function () {
 	        this.__originalMappings = [];
 	        this._parseMappings(this._mappings, this.sourceRoot);
 	      }
-	
+
 	      return this.__generatedMappings;
 	    }
 	  });
-	
+
 	  SourceMapConsumer.prototype.__originalMappings = null;
 	  Object.defineProperty(SourceMapConsumer.prototype, '_originalMappings', {
 	    get: function () {
@@ -1796,11 +1807,11 @@ _electron.app.on('ready', function () {
 	        this.__originalMappings = [];
 	        this._parseMappings(this._mappings, this.sourceRoot);
 	      }
-	
+
 	      return this.__originalMappings;
 	    }
 	  });
-	
+
 	  /**
 	   * Parse the mappings in a string in to a data structure which we can easily
 	   * query (the ordered arrays in the `this.__generatedMappings` and
@@ -1818,7 +1829,7 @@ _electron.app.on('ready', function () {
 	      var str = aStr;
 	      var mapping;
 	      var temp;
-	
+
 	      while (str.length > 0) {
 	        if (str.charAt(0) === ';') {
 	          generatedLine++;
@@ -1831,13 +1842,13 @@ _electron.app.on('ready', function () {
 	        else {
 	          mapping = {};
 	          mapping.generatedLine = generatedLine;
-	
+
 	          // Generated column.
 	          temp = base64VLQ.decode(str);
 	          mapping.generatedColumn = previousGeneratedColumn + temp.value;
 	          previousGeneratedColumn = mapping.generatedColumn;
 	          str = temp.rest;
-	
+
 	          if (str.length > 0 && !mappingSeparator.test(str.charAt(0))) {
 	            // Original source.
 	            temp = base64VLQ.decode(str);
@@ -1847,7 +1858,7 @@ _electron.app.on('ready', function () {
 	            if (str.length === 0 || mappingSeparator.test(str.charAt(0))) {
 	              throw new Error('Found a source, but no line and column');
 	            }
-	
+
 	            // Original line.
 	            temp = base64VLQ.decode(str);
 	            mapping.originalLine = previousOriginalLine + temp.value;
@@ -1858,13 +1869,13 @@ _electron.app.on('ready', function () {
 	            if (str.length === 0 || mappingSeparator.test(str.charAt(0))) {
 	              throw new Error('Found a source and line, but no column');
 	            }
-	
+
 	            // Original column.
 	            temp = base64VLQ.decode(str);
 	            mapping.originalColumn = previousOriginalColumn + temp.value;
 	            previousOriginalColumn = mapping.originalColumn;
 	            str = temp.rest;
-	
+
 	            if (str.length > 0 && !mappingSeparator.test(str.charAt(0))) {
 	              // Original name.
 	              temp = base64VLQ.decode(str);
@@ -1873,18 +1884,18 @@ _electron.app.on('ready', function () {
 	              str = temp.rest;
 	            }
 	          }
-	
+
 	          this.__generatedMappings.push(mapping);
 	          if (typeof mapping.originalLine === 'number') {
 	            this.__originalMappings.push(mapping);
 	          }
 	        }
 	      }
-	
+
 	      this.__generatedMappings.sort(util.compareByGeneratedPositions);
 	      this.__originalMappings.sort(util.compareByOriginalPositions);
 	    };
-	
+
 	  /**
 	   * Find the mapping that best matches the hypothetical "needle" mapping that
 	   * we are searching for in the given "haystack" of mappings.
@@ -1896,7 +1907,7 @@ _electron.app.on('ready', function () {
 	      // mapping for the given position and then return the opposite position it
 	      // points to. Because the mappings are sorted, we can use binary search to
 	      // find the best mapping.
-	
+
 	      if (aNeedle[aLineName] <= 0) {
 	        throw new TypeError('Line must be greater than or equal to 1, got '
 	                            + aNeedle[aLineName]);
@@ -1905,10 +1916,10 @@ _electron.app.on('ready', function () {
 	        throw new TypeError('Column must be greater than or equal to 0, got '
 	                            + aNeedle[aColumnName]);
 	      }
-	
+
 	      return binarySearch.search(aNeedle, aMappings, aComparator);
 	    };
-	
+
 	  /**
 	   * Returns the original source, line, and column information for the generated
 	   * source's line and column positions provided. The only argument is an object
@@ -1930,13 +1941,13 @@ _electron.app.on('ready', function () {
 	        generatedLine: util.getArg(aArgs, 'line'),
 	        generatedColumn: util.getArg(aArgs, 'column')
 	      };
-	
+
 	      var mapping = this._findMapping(needle,
 	                                      this._generatedMappings,
 	                                      "generatedLine",
 	                                      "generatedColumn",
 	                                      util.compareByGeneratedPositions);
-	
+
 	      if (mapping) {
 	        var source = util.getArg(mapping, 'source', null);
 	        if (source && this.sourceRoot) {
@@ -1949,7 +1960,7 @@ _electron.app.on('ready', function () {
 	          name: util.getArg(mapping, 'name', null)
 	        };
 	      }
-	
+
 	      return {
 	        source: null,
 	        line: null,
@@ -1957,7 +1968,7 @@ _electron.app.on('ready', function () {
 	        name: null
 	      };
 	    };
-	
+
 	  /**
 	   * Returns the original source content. The only argument is the url of the
 	   * original source file. Returns null if no original source content is
@@ -1968,15 +1979,15 @@ _electron.app.on('ready', function () {
 	      if (!this.sourcesContent) {
 	        return null;
 	      }
-	
+
 	      if (this.sourceRoot) {
 	        aSource = util.relative(this.sourceRoot, aSource);
 	      }
-	
+
 	      if (this._sources.has(aSource)) {
 	        return this.sourcesContent[this._sources.indexOf(aSource)];
 	      }
-	
+
 	      var url;
 	      if (this.sourceRoot
 	          && (url = util.urlParse(this.sourceRoot))) {
@@ -1989,16 +2000,16 @@ _electron.app.on('ready', function () {
 	            && this._sources.has(fileUriAbsPath)) {
 	          return this.sourcesContent[this._sources.indexOf(fileUriAbsPath)]
 	        }
-	
+
 	        if ((!url.path || url.path == "/")
 	            && this._sources.has("/" + aSource)) {
 	          return this.sourcesContent[this._sources.indexOf("/" + aSource)];
 	        }
 	      }
-	
+
 	      throw new Error('"' + aSource + '" is not in the SourceMap.');
 	    };
-	
+
 	  /**
 	   * Returns the generated line and column information for the original source,
 	   * line, and column positions provided. The only argument is an object with
@@ -2020,33 +2031,33 @@ _electron.app.on('ready', function () {
 	        originalLine: util.getArg(aArgs, 'line'),
 	        originalColumn: util.getArg(aArgs, 'column')
 	      };
-	
+
 	      if (this.sourceRoot) {
 	        needle.source = util.relative(this.sourceRoot, needle.source);
 	      }
-	
+
 	      var mapping = this._findMapping(needle,
 	                                      this._originalMappings,
 	                                      "originalLine",
 	                                      "originalColumn",
 	                                      util.compareByOriginalPositions);
-	
+
 	      if (mapping) {
 	        return {
 	          line: util.getArg(mapping, 'generatedLine', null),
 	          column: util.getArg(mapping, 'generatedColumn', null)
 	        };
 	      }
-	
+
 	      return {
 	        line: null,
 	        column: null
 	      };
 	    };
-	
+
 	  SourceMapConsumer.GENERATED_ORDER = 1;
 	  SourceMapConsumer.ORIGINAL_ORDER = 2;
-	
+
 	  /**
 	   * Iterate over each mapping between an original source/line/column and a
 	   * generated line/column in this source map.
@@ -2067,7 +2078,7 @@ _electron.app.on('ready', function () {
 	    function SourceMapConsumer_eachMapping(aCallback, aContext, aOrder) {
 	      var context = aContext || null;
 	      var order = aOrder || SourceMapConsumer.GENERATED_ORDER;
-	
+
 	      var mappings;
 	      switch (order) {
 	      case SourceMapConsumer.GENERATED_ORDER:
@@ -2079,7 +2090,7 @@ _electron.app.on('ready', function () {
 	      default:
 	        throw new Error("Unknown order of iteration.");
 	      }
-	
+
 	      var sourceRoot = this.sourceRoot;
 	      mappings.map(function (mapping) {
 	        var source = mapping.source;
@@ -2096,9 +2107,9 @@ _electron.app.on('ready', function () {
 	        };
 	      }).forEach(aCallback, context);
 	    };
-	
+
 	  exports.SourceMapConsumer = SourceMapConsumer;
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -2116,7 +2127,7 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  /**
 	   * Recursive implementation of binary search.
 	   *
@@ -2166,7 +2177,7 @@ _electron.app.on('ready', function () {
 	        : aHaystack[aLow];
 	    }
 	  }
-	
+
 	  /**
 	   * This is an implementation of binary search which will always try and return
 	   * the next lowest value checked if there is no exact hit. This is because
@@ -2185,7 +2196,7 @@ _electron.app.on('ready', function () {
 	      ? recursiveSearch(-1, aHaystack.length, aNeedle, aHaystack, aCompare)
 	      : null;
 	  };
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -2203,10 +2214,10 @@ _electron.app.on('ready', function () {
 	    var define = require('amdefine')(module, require);
 	}
 	!(__WEBPACK_AMD_DEFINE_RESULT__ = function (require, exports, module) {
-	
+
 	  var SourceMapGenerator = __webpack_require__(4).SourceMapGenerator;
 	  var util = __webpack_require__(7);
-	
+
 	  /**
 	   * SourceNodes provide a way to abstract over interpolating/concatenating
 	   * snippets of generated JavaScript source code while maintaining the line and
@@ -2228,7 +2239,7 @@ _electron.app.on('ready', function () {
 	    this.name = aName === undefined ? null : aName;
 	    if (aChunks != null) this.add(aChunks);
 	  }
-	
+
 	  /**
 	   * Creates a SourceNode from generated code and a SourceMapConsumer.
 	   *
@@ -2240,19 +2251,19 @@ _electron.app.on('ready', function () {
 	      // The SourceNode we want to fill with the generated code
 	      // and the SourceMap
 	      var node = new SourceNode();
-	
+
 	      // The generated code
 	      // Processed fragments are removed from this array.
 	      var remainingLines = aGeneratedCode.split('\n');
-	
+
 	      // We need to remember the position of "remainingLines"
 	      var lastGeneratedLine = 1, lastGeneratedColumn = 0;
-	
+
 	      // The generate SourceNodes we need a code range.
 	      // To extract it current and last mapping is used.
 	      // Here we store the last mapping.
 	      var lastMapping = null;
-	
+
 	      aSourceMapConsumer.eachMapping(function (mapping) {
 	        if (lastMapping === null) {
 	          // We add the generated code until the first mapping
@@ -2308,7 +2319,7 @@ _electron.app.on('ready', function () {
 	      // Associate the remaining code in the current line with "lastMapping"
 	      // and add the remaining lines without any mapping
 	      addMappingWithCode(lastMapping, remainingLines.join("\n"));
-	
+
 	      // Copy sourcesContent into SourceNode
 	      aSourceMapConsumer.sources.forEach(function (sourceFile) {
 	        var content = aSourceMapConsumer.sourceContentFor(sourceFile);
@@ -2316,9 +2327,9 @@ _electron.app.on('ready', function () {
 	          node.setSourceContent(sourceFile, content);
 	        }
 	      });
-	
+
 	      return node;
-	
+
 	      function addMappingWithCode(mapping, code) {
 	        if (mapping === null || mapping.source === undefined) {
 	          node.add(code);
@@ -2331,7 +2342,7 @@ _electron.app.on('ready', function () {
 	        }
 	      }
 	    };
-	
+
 	  /**
 	   * Add a chunk of generated JS to this source node.
 	   *
@@ -2356,7 +2367,7 @@ _electron.app.on('ready', function () {
 	    }
 	    return this;
 	  };
-	
+
 	  /**
 	   * Add a chunk of generated JS to the beginning of this source node.
 	   *
@@ -2379,7 +2390,7 @@ _electron.app.on('ready', function () {
 	    }
 	    return this;
 	  };
-	
+
 	  /**
 	   * Walk over the tree of JS snippets in this node and its children. The
 	   * walking function is called once for each snippet of JS and is passed that
@@ -2404,7 +2415,7 @@ _electron.app.on('ready', function () {
 	      }
 	    }
 	  };
-	
+
 	  /**
 	   * Like `String.prototype.join` except for SourceNodes. Inserts `aStr` between
 	   * each of `this.children`.
@@ -2426,7 +2437,7 @@ _electron.app.on('ready', function () {
 	    }
 	    return this;
 	  };
-	
+
 	  /**
 	   * Call String.prototype.replace on the very right-most source snippet. Useful
 	   * for trimming whitespace from the end of a source node, etc.
@@ -2447,7 +2458,7 @@ _electron.app.on('ready', function () {
 	    }
 	    return this;
 	  };
-	
+
 	  /**
 	   * Set the source content for a source file. This will be added to the SourceMapGenerator
 	   * in the sourcesContent field.
@@ -2459,7 +2470,7 @@ _electron.app.on('ready', function () {
 	    function SourceNode_setSourceContent(aSourceFile, aSourceContent) {
 	      this.sourceContents[util.toSetString(aSourceFile)] = aSourceContent;
 	    };
-	
+
 	  /**
 	   * Walk over the tree of SourceNodes. The walking function is called for each
 	   * source file content and is passed the filename and source content.
@@ -2473,13 +2484,13 @@ _electron.app.on('ready', function () {
 	          this.children[i].walkSourceContents(aFn);
 	        }
 	      }
-	
+
 	      var sources = Object.keys(this.sourceContents);
 	      for (var i = 0, len = sources.length; i < len; i++) {
 	        aFn(util.fromSetString(sources[i]), this.sourceContents[sources[i]]);
 	      }
 	    };
-	
+
 	  /**
 	   * Return the string representation of this source node. Walks over the tree
 	   * and concatenates all the various snippets together to one string.
@@ -2491,7 +2502,7 @@ _electron.app.on('ready', function () {
 	    });
 	    return str;
 	  };
-	
+
 	  /**
 	   * Returns the string representation of this source node along with a source
 	   * map.
@@ -2557,12 +2568,12 @@ _electron.app.on('ready', function () {
 	    this.walkSourceContents(function (sourceFile, sourceContent) {
 	      map.setSourceContent(sourceFile, sourceContent);
 	    });
-	
+
 	    return { code: generated.code, map: map };
 	  };
-	
+
 	  exports.SourceNode = SourceNode;
-	
+
 	}.call(exports, __webpack_require__, exports, module), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 
 
@@ -2589,19 +2600,19 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	
+
 	var _electron = __webpack_require__(14);
-	
+
 	var _path = __webpack_require__(12);
-	
+
 	var _path2 = _interopRequireDefault(_path);
-	
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
+
 	function createLoginWindow(loginCallback) {
 	    var loginWindow = new _electron.BrowserWindow({
 	        width: 300,
@@ -2610,14 +2621,14 @@ _electron.app.on('ready', function () {
 	        resizable: false
 	    });
 	    loginWindow.loadURL('file://' + _path2.default.join(__dirname, '/static/login/login.html'));
-	
+
 	    _electron.ipcMain.once('login-message', function (event, usernameAndPassword) {
 	        loginCallback(usernameAndPassword[0], usernameAndPassword[1]);
 	        loginWindow.close();
 	    });
 	    return loginWindow;
 	}
-	
+
 	exports.default = createLoginWindow;
 
 /***/ },
@@ -2625,47 +2636,47 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	
+
 	var _fs = __webpack_require__(13);
-	
+
 	var _fs2 = _interopRequireDefault(_fs);
-	
+
 	var _path = __webpack_require__(12);
-	
+
 	var _path2 = _interopRequireDefault(_path);
-	
+
 	var _electron = __webpack_require__(14);
-	
+
 	var _electronWindowState = __webpack_require__(17);
-	
+
 	var _electronWindowState2 = _interopRequireDefault(_electronWindowState);
-	
+
 	var _helpers = __webpack_require__(24);
-	
+
 	var _helpers2 = _interopRequireDefault(_helpers);
-	
+
 	var _menu = __webpack_require__(27);
-	
+
 	var _menu2 = _interopRequireDefault(_menu);
-	
+
 	var _contextMenu = __webpack_require__(28);
-	
+
 	var _contextMenu2 = _interopRequireDefault(_contextMenu);
-	
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
+
 	var isOSX = _helpers2.default.isOSX;
 	var linkIsInternal = _helpers2.default.linkIsInternal;
 	var getCssToInject = _helpers2.default.getCssToInject;
 	var shouldInjectCss = _helpers2.default.shouldInjectCss;
-	
-	
+
+
 	var ZOOM_INTERVAL = 0.1;
-	
+
 	/**
 	 *
 	 * @param {{}} options AppArgs from nativefier.json
@@ -2675,12 +2686,12 @@ _electron.app.on('ready', function () {
 	 */
 	function createMainWindow(options, onAppQuit, setDockBadge) {
 	    var _this = this;
-	
+
 	    var mainWindowState = (0, _electronWindowState2.default)({
 	        defaultWidth: options.width || 1280,
 	        defaultHeight: options.height || 800
 	    });
-	
+
 	    var mainWindow = new _electron.BrowserWindow({
 	        frame: !options.hideWindowFrame,
 	        width: mainWindowState.width,
@@ -2707,34 +2718,34 @@ _electron.app.on('ready', function () {
 	        // set to undefined and not false because explicitly setting to false will disable full screen
 	        fullscreen: options.fullScreen || undefined
 	    });
-	
+
 	    mainWindowState.manage(mainWindow);
-	
+
 	    // after first run, no longer force full screen to be true
 	    if (options.fullScreen) {
 	        options.fullScreen = undefined;
 	        _fs2.default.writeFileSync(_path2.default.join(__dirname, '..', 'nativefier.json'), JSON.stringify(options));
 	    }
-	
+
 	    // after first run, no longer force maximize to be true
 	    if (options.maximize) {
 	        mainWindow.maximize();
 	        options.maximize = undefined;
 	        _fs2.default.writeFileSync(_path2.default.join(__dirname, '..', 'nativefier.json'), JSON.stringify(options));
 	    }
-	
+
 	    var currentZoom = 1;
-	
+
 	    var onZoomIn = function onZoomIn() {
 	        currentZoom += ZOOM_INTERVAL;
 	        mainWindow.webContents.send('change-zoom', currentZoom);
 	    };
-	
+
 	    var onZoomOut = function onZoomOut() {
 	        currentZoom -= ZOOM_INTERVAL;
 	        mainWindow.webContents.send('change-zoom', currentZoom);
 	    };
-	
+
 	    var clearAppData = function clearAppData() {
 	        _electron.dialog.showMessageBox(mainWindow, {
 	            type: 'warning',
@@ -2755,19 +2766,19 @@ _electron.app.on('ready', function () {
 	            }
 	        });
 	    };
-	
+
 	    var onGoBack = function onGoBack() {
 	        mainWindow.webContents.goBack();
 	    };
-	
+
 	    var onGoForward = function onGoForward() {
 	        mainWindow.webContents.goForward();
 	    };
-	
+
 	    var getCurrentUrl = function getCurrentUrl() {
 	        return mainWindow.webContents.getURL();
 	    };
-	
+
 	    var menuOptions = {
 	        nativefierVersion: options.nativefierVersion,
 	        appQuit: onAppQuit,
@@ -2779,27 +2790,27 @@ _electron.app.on('ready', function () {
 	        clearAppData: clearAppData,
 	        disableDevTools: options.disableDevTools
 	    };
-	
+
 	    (0, _menu2.default)(menuOptions);
 	    if (!options.disableContextMenu) {
 	        (0, _contextMenu2.default)(mainWindow);
 	    }
-	
+
 	    if (options.userAgent) {
 	        mainWindow.webContents.setUserAgent(options.userAgent);
 	    }
-	
+
 	    maybeInjectCss(mainWindow);
 	    mainWindow.webContents.on('did-finish-load', function () {
 	        mainWindow.webContents.send('params', JSON.stringify(options));
 	    });
-	
+
 	    if (options.counter) {
 	        mainWindow.on('page-title-updated', function () {
 	            if (mainWindow.isFocused()) {
 	                return;
 	            }
-	
+
 	            if (options.counter) {
 	                var itemCountRegex = /[\(\[{](\d*?)[}\]\)]/;
 	                var match = itemCountRegex.exec(mainWindow.getTitle());
@@ -2811,26 +2822,26 @@ _electron.app.on('ready', function () {
 	            setDockBadge('●');
 	        });
 	    }
-	
+
 	    mainWindow.webContents.on('new-window', function (event, urlToGo) {
 	        if (mainWindow.useDefaultWindowBehaviour) {
 	            mainWindow.useDefaultWindowBehaviour = false;
 	            return;
 	        }
-	
+
 	        if (linkIsInternal(options.targetUrl, urlToGo)) {
 	            return;
 	        }
 	        event.preventDefault();
 	        _electron.shell.openExternal(urlToGo);
 	    });
-	
+
 	    mainWindow.loadURL(options.targetUrl);
-	
+
 	    mainWindow.on('focus', function () {
 	        setDockBadge('');
 	    });
-	
+
 	    mainWindow.on('close', function (event) {
 	        if (mainWindow.isFullScreen()) {
 	            mainWindow.setFullScreen(false);
@@ -2838,7 +2849,7 @@ _electron.app.on('ready', function () {
 	        }
 	        maybeHideWindow(mainWindow, event, options.fastQuit);
 	    });
-		
+
 		mainWindow.on('minimize', function (event) {
 	        if (mainWindow.isFullScreen()) {
 	            mainWindow.setFullScreen(false);
@@ -2846,17 +2857,17 @@ _electron.app.on('ready', function () {
 	        event.preventDefault()
             mainWindow.hide();
 	    });
-	
+
 	    return mainWindow;
 	}
-	
+
 	_electron.ipcMain.on('cancelNewWindowOverride', function () {
 	    var allWindows = _electron.BrowserWindow.getAllWindows();
 	    allWindows.forEach(function (window) {
 	        window.useDefaultWindowBehaviour = false;
 	    });
 	});
-	
+
 	function maybeHideWindow(window, event, fastQuit) {
 	    if (isOSX() && !fastQuit) {
 	        // this is called when exiting from clicking the cross button on the window
@@ -2865,23 +2876,23 @@ _electron.app.on('ready', function () {
 	    }
 	    // will close the window on other platforms
 	}
-	
+
 	function maybeInjectCss(browserWindow) {
 	    if (!shouldInjectCss()) {
 	        return;
 	    }
-	
+
 	    var cssToInject = getCssToInject();
-	
+
 	    var injectCss = function injectCss() {
 	        browserWindow.webContents.insertCSS(cssToInject);
 	    };
-	
+
 	    browserWindow.webContents.on('did-finish-load', function () {
 	        // remove the injection of css the moment the page is loaded
 	        browserWindow.webContents.removeListener('did-get-response-details', injectCss);
 	    });
-	
+
 	    // on every page navigation inject the css
 	    browserWindow.webContents.on('did-navigate', function () {
 	        // we have to inject the css in did-get-response-details to prevent the fouc
@@ -2889,7 +2900,7 @@ _electron.app.on('ready', function () {
 	        browserWindow.webContents.on('did-get-response-details', injectCss);
 	    });
 	}
-	
+
 	exports.default = createMainWindow;
 
 /***/ },
@@ -2897,7 +2908,7 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	var electron = __webpack_require__(14);
 	var app = electron.app;
 	var jsonfile = __webpack_require__(18);
@@ -2905,7 +2916,7 @@ _electron.app.on('ready', function () {
 	var mkdirp = __webpack_require__(19);
 	var objectAssign = __webpack_require__(20);
 	var deepEqual = __webpack_require__(21);
-	
+
 	module.exports = function (options) {
 	  var screen = electron.screen;
 	  var state;
@@ -2919,11 +2930,11 @@ _electron.app.on('ready', function () {
 	    fullScreen: true
 	  }, options);
 	  var fullStoreFileName = path.join(config.path, config.file);
-	
+
 	  function isNormal(win) {
 	    return !win.isMaximized() && !win.isMinimized() && !win.isFullScreen();
 	  }
-	
+
 	  function hasBounds() {
 	    return state &&
 	      state.x !== undefined &&
@@ -2931,7 +2942,7 @@ _electron.app.on('ready', function () {
 	      state.width !== undefined &&
 	      state.height !== undefined;
 	  }
-	
+
 	  function validateState() {
 	    var isValid = state && hasBounds();
 	    if (isValid && state.displayBounds) {
@@ -2941,13 +2952,13 @@ _electron.app.on('ready', function () {
 	    }
 	    return isValid;
 	  }
-	
+
 	  function updateState(win) {
 	    win = win || winRef;
 	    if (!win) {
 	      return;
 	    }
-	
+
 	    var winBounds = win.getBounds();
 	    if (isNormal(win)) {
 	      state.x = winBounds.x;
@@ -2959,13 +2970,13 @@ _electron.app.on('ready', function () {
 	    state.isFullScreen = win.isFullScreen();
 	    state.displayBounds = screen.getDisplayMatching(winBounds).bounds;
 	  }
-	
+
 	  function saveState(win) {
 	    // Update window state only if it was provided
 	    if (win) {
 	      updateState(win);
 	    }
-	
+
 	    // Save state
 	    try {
 	      mkdirp.sync(path.dirname(fullStoreFileName));
@@ -2974,23 +2985,23 @@ _electron.app.on('ready', function () {
 	      // Don't care
 	    }
 	  }
-	
+
 	  function stateChangeHandler() {
 	    // Handles both 'resize' and 'move'
 	    clearTimeout(stateChangeTimer);
 	    stateChangeTimer = setTimeout(updateState, eventHandlingDelay);
 	  }
-	
+
 	  function closeHandler() {
 	    updateState();
 	  }
-	
+
 	  function closedHandler() {
 	    // Unregister listeners and save state
 	    unmanage();
 	    saveState();
 	  }
-	
+
 	  function manage(win) {
 	    if (config.maximize && state.isMaximized) {
 	      win.maximize();
@@ -3004,7 +3015,7 @@ _electron.app.on('ready', function () {
 	    win.on('closed', closedHandler);
 	    winRef = win;
 	  }
-	
+
 	  function unmanage() {
 	    if (winRef) {
 	      winRef.removeListener('resize', stateChangeHandler);
@@ -3015,25 +3026,25 @@ _electron.app.on('ready', function () {
 	      winRef = null;
 	    }
 	  }
-	
+
 	  // Load previous state
 	  try {
 	    state = jsonfile.readFileSync(fullStoreFileName);
 	  } catch (err) {
 	    // Don't care
 	  }
-	
+
 	  // Check state validity
 	  if (!validateState()) {
 	    state = null;
 	  }
-	
+
 	  // Set state fallback values
 	  state = objectAssign({
 	    width: config.defaultWidth || 800,
 	    height: config.defaultHeight || 600
 	  }, state);
-	
+
 	  return {
 	    get x() { return state.x; },
 	    get y() { return state.y; },
@@ -3053,20 +3064,20 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	var _fs = __webpack_require__(13)
-	
+
 	function readFile (file, options, callback) {
 	  if (callback == null) {
 	    callback = options
 	    options = {}
 	  }
-	
+
 	  if (typeof options === 'string') {
 	    options = {encoding: options}
 	  }
-	
+
 	  options = options || {}
 	  var fs = options.fs || _fs
-	
+
 	  var shouldThrow = true
 	  // DO NOT USE 'passParsingErrors' THE NAME WILL CHANGE!!!, use 'throws' instead
 	  if ('passParsingErrors' in options) {
@@ -3074,12 +3085,12 @@ _electron.app.on('ready', function () {
 	  } else if ('throws' in options) {
 	    shouldThrow = options.throws
 	  }
-	
+
 	  fs.readFile(file, options, function (err, data) {
 	    if (err) return callback(err)
-	
+
 	    data = stripBom(data)
-	
+
 	    var obj
 	    try {
 	      obj = JSON.parse(data, options ? options.reviver : null)
@@ -3091,19 +3102,19 @@ _electron.app.on('ready', function () {
 	        return callback(null, null)
 	      }
 	    }
-	
+
 	    callback(null, obj)
 	  })
 	}
-	
+
 	function readFileSync (file, options) {
 	  options = options || {}
 	  if (typeof options === 'string') {
 	    options = {encoding: options}
 	  }
-	
+
 	  var fs = options.fs || _fs
-	
+
 	  var shouldThrow = true
 	  // DO NOT USE 'passParsingErrors' THE NAME WILL CHANGE!!!, use 'throws' instead
 	  if ('passParsingErrors' in options) {
@@ -3111,10 +3122,10 @@ _electron.app.on('ready', function () {
 	  } else if ('throws' in options) {
 	    shouldThrow = options.throws
 	  }
-	
+
 	  var content = fs.readFileSync(file, options)
 	  content = stripBom(content)
-	
+
 	  try {
 	    return JSON.parse(content, options.reviver)
 	  } catch (err) {
@@ -3126,7 +3137,7 @@ _electron.app.on('ready', function () {
 	    }
 	  }
 	}
-	
+
 	function writeFile (file, obj, options, callback) {
 	  if (callback == null) {
 	    callback = options
@@ -3134,43 +3145,43 @@ _electron.app.on('ready', function () {
 	  }
 	  options = options || {}
 	  var fs = options.fs || _fs
-	
+
 	  var spaces = typeof options === 'object' && options !== null
 	    ? 'spaces' in options
 	    ? options.spaces : this.spaces
 	    : this.spaces
-	
+
 	  var str = ''
 	  try {
 	    str = JSON.stringify(obj, options ? options.replacer : null, spaces) + '\n'
 	  } catch (err) {
 	    if (callback) return callback(err, null)
 	  }
-	
+
 	  fs.writeFile(file, str, options, callback)
 	}
-	
+
 	function writeFileSync (file, obj, options) {
 	  options = options || {}
 	  var fs = options.fs || _fs
-	
+
 	  var spaces = typeof options === 'object' && options !== null
 	    ? 'spaces' in options
 	    ? options.spaces : this.spaces
 	    : this.spaces
-	
+
 	  var str = JSON.stringify(obj, options.replacer, spaces) + '\n'
 	  // not sure if fs.writeFileSync returns anything, but just in case
 	  return fs.writeFileSync(file, str, options)
 	}
-	
+
 	function stripBom (content) {
 	  // we do this because JSON.parse would convert it to a utf8 string if encoding wasn't specified
 	  if (Buffer.isBuffer(content)) content = content.toString('utf8')
 	  content = content.replace(/^\uFEFF/, '')
 	  return content
 	}
-	
+
 	var jsonfile = {
 	  spaces: null,
 	  readFile: readFile,
@@ -3178,7 +3189,7 @@ _electron.app.on('ready', function () {
 	  writeFile: writeFile,
 	  writeFileSync: writeFileSync
 	}
-	
+
 	module.exports = jsonfile
 
 
@@ -3189,9 +3200,9 @@ _electron.app.on('ready', function () {
 	var path = __webpack_require__(12);
 	var fs = __webpack_require__(13);
 	var _0777 = parseInt('0777', 8);
-	
+
 	module.exports = mkdirP.mkdirp = mkdirP.mkdirP = mkdirP;
-	
+
 	function mkdirP (p, opts, f, made) {
 	    if (typeof opts === 'function') {
 	        f = opts;
@@ -3200,18 +3211,18 @@ _electron.app.on('ready', function () {
 	    else if (!opts || typeof opts !== 'object') {
 	        opts = { mode: opts };
 	    }
-	    
+
 	    var mode = opts.mode;
 	    var xfs = opts.fs || fs;
-	    
+
 	    if (mode === undefined) {
 	        mode = _0777 & (~process.umask());
 	    }
 	    if (!made) made = null;
-	    
+
 	    var cb = f || function () {};
 	    p = path.resolve(p);
-	    
+
 	    xfs.mkdir(p, mode, function (er) {
 	        if (!er) {
 	            made = made || p;
@@ -3224,7 +3235,7 @@ _electron.app.on('ready', function () {
 	                    else mkdirP(p, opts, cb, made);
 	                });
 	                break;
-	
+
 	            // In the case of any other error, just see if there's a dir
 	            // there already.  If so, then hooray!  If not, then something
 	            // is borked.
@@ -3239,22 +3250,22 @@ _electron.app.on('ready', function () {
 	        }
 	    });
 	}
-	
+
 	mkdirP.sync = function sync (p, opts, made) {
 	    if (!opts || typeof opts !== 'object') {
 	        opts = { mode: opts };
 	    }
-	    
+
 	    var mode = opts.mode;
 	    var xfs = opts.fs || fs;
-	    
+
 	    if (mode === undefined) {
 	        mode = _0777 & (~process.umask());
 	    }
 	    if (!made) made = null;
-	
+
 	    p = path.resolve(p);
-	
+
 	    try {
 	        xfs.mkdirSync(p, mode);
 	        made = made || p;
@@ -3265,7 +3276,7 @@ _electron.app.on('ready', function () {
 	                made = sync(path.dirname(p), opts, made);
 	                sync(p, opts, made);
 	                break;
-	
+
 	            // In the case of any other error, just see if there's a dir
 	            // there already.  If so, then hooray!  If not, then something
 	            // is borked.
@@ -3281,7 +3292,7 @@ _electron.app.on('ready', function () {
 	                break;
 	        }
 	    }
-	
+
 	    return made;
 	};
 
@@ -3294,30 +3305,30 @@ _electron.app.on('ready', function () {
 	/* eslint-disable no-unused-vars */
 	var hasOwnProperty = Object.prototype.hasOwnProperty;
 	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-	
+
 	function toObject(val) {
 		if (val === null || val === undefined) {
 			throw new TypeError('Object.assign cannot be called with null or undefined');
 		}
-	
+
 		return Object(val);
 	}
-	
+
 	function shouldUseNative() {
 		try {
 			if (!Object.assign) {
 				return false;
 			}
-	
+
 			// Detect buggy property enumeration order in older V8 versions.
-	
+
 			// https://bugs.chromium.org/p/v8/issues/detail?id=4118
 			var test1 = new String('abc');  // eslint-disable-line
 			test1[5] = 'de';
 			if (Object.getOwnPropertyNames(test1)[0] === '5') {
 				return false;
 			}
-	
+
 			// https://bugs.chromium.org/p/v8/issues/detail?id=3056
 			var test2 = {};
 			for (var i = 0; i < 10; i++) {
@@ -3329,7 +3340,7 @@ _electron.app.on('ready', function () {
 			if (order2.join('') !== '0123456789') {
 				return false;
 			}
-	
+
 			// https://bugs.chromium.org/p/v8/issues/detail?id=3056
 			var test3 = {};
 			'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
@@ -3339,28 +3350,28 @@ _electron.app.on('ready', function () {
 					'abcdefghijklmnopqrst') {
 				return false;
 			}
-	
+
 			return true;
 		} catch (e) {
 			// We don't expect any of the above to throw, but better to be safe.
 			return false;
 		}
 	}
-	
+
 	module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 		var from;
 		var to = toObject(target);
 		var symbols;
-	
+
 		for (var s = 1; s < arguments.length; s++) {
 			from = Object(arguments[s]);
-	
+
 			for (var key in from) {
 				if (hasOwnProperty.call(from, key)) {
 					to[key] = from[key];
 				}
 			}
-	
+
 			if (Object.getOwnPropertySymbols) {
 				symbols = Object.getOwnPropertySymbols(from);
 				for (var i = 0; i < symbols.length; i++) {
@@ -3370,7 +3381,7 @@ _electron.app.on('ready', function () {
 				}
 			}
 		}
-	
+
 		return to;
 	};
 
@@ -3382,21 +3393,21 @@ _electron.app.on('ready', function () {
 	var pSlice = Array.prototype.slice;
 	var objectKeys = __webpack_require__(22);
 	var isArguments = __webpack_require__(23);
-	
+
 	var deepEqual = module.exports = function (actual, expected, opts) {
 	  if (!opts) opts = {};
 	  // 7.1. All identical values are equivalent, as determined by ===.
 	  if (actual === expected) {
 	    return true;
-	
+
 	  } else if (actual instanceof Date && expected instanceof Date) {
 	    return actual.getTime() === expected.getTime();
-	
+
 	  // 7.3. Other pairs that do not both pass typeof value == 'object',
 	  // equivalence is determined by ==.
 	  } else if (!actual || !expected || typeof actual != 'object' && typeof expected != 'object') {
 	    return opts.strict ? actual === expected : actual == expected;
-	
+
 	  // 7.4. For all other Object pairs, including Array objects, equivalence is
 	  // determined by having the same number of owned properties (as verified
 	  // with Object.prototype.hasOwnProperty.call), the same set of keys
@@ -3407,11 +3418,11 @@ _electron.app.on('ready', function () {
 	    return objEquiv(actual, expected, opts);
 	  }
 	}
-	
+
 	function isUndefinedOrNull(value) {
 	  return value === null || value === undefined;
 	}
-	
+
 	function isBuffer (x) {
 	  if (!x || typeof x !== 'object' || typeof x.length !== 'number') return false;
 	  if (typeof x.copy !== 'function' || typeof x.slice !== 'function') {
@@ -3420,7 +3431,7 @@ _electron.app.on('ready', function () {
 	  if (x.length > 0 && typeof x[0] !== 'number') return false;
 	  return true;
 	}
-	
+
 	function objEquiv(a, b, opts) {
 	  var i, key;
 	  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
@@ -3481,7 +3492,7 @@ _electron.app.on('ready', function () {
 
 	exports = module.exports = typeof Object.keys === 'function'
 	  ? Object.keys : shim;
-	
+
 	exports.shim = shim;
 	function shim (obj) {
 	  var keys = [];
@@ -3497,14 +3508,14 @@ _electron.app.on('ready', function () {
 	var supportsArgumentsClass = (function(){
 	  return Object.prototype.toString.call(arguments)
 	})() == '[object Arguments]';
-	
+
 	exports = module.exports = supportsArgumentsClass ? supported : unsupported;
-	
+
 	exports.supported = supported;
 	function supported(object) {
 	  return Object.prototype.toString.call(object) == '[object Arguments]';
 	};
-	
+
 	exports.unsupported = unsupported;
 	function unsupported(object){
 	  return object &&
@@ -3521,49 +3532,49 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	
+
 	var _wurl = __webpack_require__(25);
-	
+
 	var _wurl2 = _interopRequireDefault(_wurl);
-	
+
 	var _os = __webpack_require__(26);
-	
+
 	var _os2 = _interopRequireDefault(_os);
-	
+
 	var _fs = __webpack_require__(13);
-	
+
 	var _fs2 = _interopRequireDefault(_fs);
-	
+
 	var _path = __webpack_require__(12);
-	
+
 	var _path2 = _interopRequireDefault(_path);
-	
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
+
 	var INJECT_CSS_PATH = _path2.default.join(__dirname, '..', 'inject/inject.css');
-	
+
 	function isOSX() {
 	    return _os2.default.platform() === 'darwin';
 	}
-	
+
 	function isLinux() {
 	    return _os2.default.platform() === 'linux';
 	}
-	
+
 	function isWindows() {
 	    return _os2.default.platform() === 'win32';
 	}
-	
+
 	function linkIsInternal(currentUrl, newUrl) {
 	    var currentDomain = (0, _wurl2.default)('domain', currentUrl);
 	    var newDomain = (0, _wurl2.default)('domain', newUrl);
 	    return currentDomain === newDomain;
 	}
-	
+
 	function shouldInjectCss() {
 	    try {
 	        _fs2.default.accessSync(INJECT_CSS_PATH, _fs2.default.F_OK);
@@ -3572,11 +3583,11 @@ _electron.app.on('ready', function () {
 	        return false;
 	    }
 	}
-	
+
 	function getCssToInject() {
 	    return _fs2.default.readFileSync(INJECT_CSS_PATH).toString();
 	}
-	
+
 	/**
 	 * Helper method to print debug messages from the main process in the browser window
 	 * @param {BrowserWindow} browserWindow
@@ -3589,7 +3600,7 @@ _electron.app.on('ready', function () {
 	    }, 3000);
 	    console.log(message);
 	}
-	
+
 	exports.default = {
 	    isOSX: isOSX,
 	    isLinux: isLinux,
@@ -3605,26 +3616,26 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports) {
 
 	module.exports = function (arg, url) {
-	
+
 	    function _t() {
 	        return new RegExp(/(.*?)\.?([^\.]*?)\.?(com|net|org|biz|ws|in|me|co\.uk|co|org\.uk|ltd\.uk|plc\.uk|me\.uk|edu|mil|br\.com|cn\.com|eu\.com|hu\.com|no\.com|qc\.com|sa\.com|se\.com|se\.net|us\.com|uy\.com|ac|co\.ac|gv\.ac|or\.ac|ac\.ac|af|am|as|at|ac\.at|co\.at|gv\.at|or\.at|asn\.au|com\.au|edu\.au|org\.au|net\.au|id\.au|be|ac\.be|adm\.br|adv\.br|am\.br|arq\.br|art\.br|bio\.br|cng\.br|cnt\.br|com\.br|ecn\.br|eng\.br|esp\.br|etc\.br|eti\.br|fm\.br|fot\.br|fst\.br|g12\.br|gov\.br|ind\.br|inf\.br|jor\.br|lel\.br|med\.br|mil\.br|net\.br|nom\.br|ntr\.br|odo\.br|org\.br|ppg\.br|pro\.br|psc\.br|psi\.br|rec\.br|slg\.br|tmp\.br|tur\.br|tv\.br|vet\.br|zlg\.br|br|ab\.ca|bc\.ca|mb\.ca|nb\.ca|nf\.ca|ns\.ca|nt\.ca|on\.ca|pe\.ca|qc\.ca|sk\.ca|yk\.ca|ca|cc|ac\.cn|com\.cn|edu\.cn|gov\.cn|org\.cn|bj\.cn|sh\.cn|tj\.cn|cq\.cn|he\.cn|nm\.cn|ln\.cn|jl\.cn|hl\.cn|js\.cn|zj\.cn|ah\.cn|gd\.cn|gx\.cn|hi\.cn|sc\.cn|gz\.cn|yn\.cn|xz\.cn|sn\.cn|gs\.cn|qh\.cn|nx\.cn|xj\.cn|tw\.cn|hk\.cn|mo\.cn|cn|cx|cz|de|dk|fo|com\.ec|tm\.fr|com\.fr|asso\.fr|presse\.fr|fr|gf|gs|co\.il|net\.il|ac\.il|k12\.il|gov\.il|muni\.il|ac\.in|co\.in|org\.in|ernet\.in|gov\.in|net\.in|res\.in|is|it|ac\.jp|co\.jp|go\.jp|or\.jp|ne\.jp|ac\.kr|co\.kr|go\.kr|ne\.kr|nm\.kr|or\.kr|li|lt|lu|asso\.mc|tm\.mc|com\.mm|org\.mm|net\.mm|edu\.mm|gov\.mm|ms|nl|no|nu|pl|ro|org\.ro|store\.ro|tm\.ro|firm\.ro|www\.ro|arts\.ro|rec\.ro|info\.ro|nom\.ro|nt\.ro|se|si|com\.sg|org\.sg|net\.sg|gov\.sg|sk|st|tf|ac\.th|co\.th|go\.th|mi\.th|net\.th|or\.th|tm|to|com\.tr|edu\.tr|gov\.tr|k12\.tr|net\.tr|org\.tr|com\.tw|org\.tw|net\.tw|ac\.uk|uk\.com|uk\.net|gb\.com|gb\.net|vg|sh|kz|ch|info|ua|gov|name|pro|ie|hk|com\.hk|org\.hk|net\.hk|edu\.hk|us|tk|cd|by|ad|lv|eu\.lv|bz|es|jp|cl|ag|mobi|eu|co\.nz|org\.nz|net\.nz|maori\.nz|iwi\.nz|io|la|md|sc|sg|vc|tw|travel|my|se|tv|pt|com\.pt|edu\.pt|asia|fi|com\.ve|net\.ve|fi|org\.ve|web\.ve|info\.ve|co\.ve|tel|im|gr|ru|net\.ru|org\.ru|hr|com\.hr|ly|xyz)$/);
 	    }
-	
+
 	    function _d(s) {
 	      return decodeURIComponent(s.replace(/\+/g, ' '));
 	    }
-	
+
 	    function _i(arg, str) {
 	        var sptr = arg.charAt(0),
 	            split = str.split(sptr);
-	
+
 	        if (sptr === arg) { return split; }
-	
+
 	        arg = parseInt(arg.substring(1), 10);
-	
+
 	        return split[arg < 0 ? split.length + arg : arg - 1];
 	    }
-	
+
 	    function _f(arg, str) {
 	        var sptr = arg.charAt(0),
 	            split = str.split('&'),
@@ -3632,177 +3643,177 @@ _electron.app.on('ready', function () {
 	            params = {},
 	            tmp = [],
 	            arg2 = arg.substring(1);
-	
+
 	        for (var i in split) {
 	            field = split[i].split(/=(.*)/);
-	
+
 	            if (field[0].replace(/\s/g, '') !== '') {
 	                field[1] = _d(field[1] || '');
-	
+
 	                // If we have a match just return it right away.
 	                if (arg2 === field[0]) { return field[1]; }
-	
+
 	                // Check for array pattern.
 	                tmp = field[0].match(/(.*)\[([0-9]+)\]/);
-	
+
 	                if (tmp) {
 	                    params[tmp[1]] = params[tmp[1]] || [];
-	                
+
 	                    params[tmp[1]][tmp[2]] = field[1];
 	                }
 	                else {
-	                    params[field[0]] = field[1];    
+	                    params[field[0]] = field[1];
 	                }
 	            }
 	        }
-	
+
 	        if (sptr === arg) { return params; }
-	
+
 	        return params[arg2];
 	    }
-	
+
 	    //return function(arg, url) {
 	    var _l = {}, tmp, tmp2;
-	
+
 	    if (arg === 'tld?') { return _t(); }
-	
+
 	    url = url || window.location.toString();
-	
+
 	    if ( ! arg) { return url; }
-	
+
 	    arg = arg.toString();
-	
+
 	    if (url.match(/^mailto:[^\/]/)) {
 	        _l.protocol = 'mailto';
 	        _l.email = url.split(/mailto\:/)[1];
 	    }
 	    else {
-	
+
 	        // Anchor.
 	        tmp = url.split(/#(.*)/);
 	        _l.hash = tmp[1] ? tmp[1] : undefined;
-	
+
 	        // Return anchor parts.
 	        if (_l.hash && arg.match(/^#/)) { return _f(arg, _l.hash); }
-	        
+
 	        // Query
 	        tmp = tmp[0].split(/\?(.*)/);
 	        _l.query = tmp[1] ? tmp[1] : undefined;
-	
+
 	        // Return query parts.
 	        if (_l.query && arg.match(/^\?/)) { return _f(arg, _l.query); }
-	
+
 	        // Protocol.
 	        tmp = tmp[0].split(/\:?\/\//);
 	        _l.protocol = tmp[1] ? tmp[0].toLowerCase() : undefined;
-	
+
 	        // Path.
 	        tmp = (tmp[1] ? tmp[1] : tmp[0]).split(/(\/.*)/);
 	        _l.path = tmp[1] ? tmp[1] : '';
-	
+
 	        // Clean up path.
 	        _l.path = _l.path.replace(/^([^\/])/, '/$1').replace(/\/$/, '');
-	
+
 	        // Return path parts.
 	        if (arg.match(/^[\-0-9]+$/)) { arg = arg.replace(/^([^\/])/, '/$1'); }
 	        if (arg.match(/^\//)) { return _i(arg, _l.path.substring(1)); }
-	
+
 	        // File.
 	        tmp2 = _i('/-1', _l.path.substring(1));
 	        tmp2 = tmp2.split(/\.(.*)/);
-	
+
 	        // Filename and fileext.
 	        if (tmp2[1]) {
 	            _l.file = tmp2[0] + '.' + tmp2[1];
 	            _l.filename = tmp2[0];
 	            _l.fileext = tmp2[1];
 	        }
-	
+
 	        // Port.
 	        tmp = tmp[0].split(/\:([0-9]+)$/);
 	        _l.port = tmp[1] ? tmp[1] : undefined;
-	
+
 	        // Auth.
 	        tmp = tmp[0].split(/@/);
 	        _l.auth = tmp[1] ? tmp[0] : undefined;
-	
+
 	        // User and pass.
 	        if (_l.auth) {
 	            tmp2 = _l.auth.split(/\:(.*)/);
 	            _l.user = tmp2[0];
 	            _l.pass = tmp2[1];
 	        }
-	
+
 	        // Hostname.
 	        _l.hostname = (tmp[1] ? tmp[1] : tmp[0]).toLowerCase();
-	
+
 	        // Return hostname parts.
 	        if (arg.charAt(0) === '.') { return _i(arg, _l.hostname); }
-	
+
 	        // Domain, tld and sub domain.
 	        if (_t()) {
 	            tmp = _l.hostname.match(_t());
-	
+
 	            if (tmp) {
 	                _l.tld = tmp[3];
 	                _l.domain = tmp[2] ? tmp[2] + '.' + tmp[3] : undefined;
 	                _l.sub = tmp[1] || undefined;
 	            }
 	        }
-	
+
 	        // Set port and protocol defaults if not set.
 	        _l.port = _l.port || (_l.protocol === 'https' ? '443' : '80');
 	        _l.protocol = _l.protocol || (_l.port === '443' ? 'https' : 'http');
 	    }
-	
+
 	    // Return arg.
 	    if (arg in _l) { return _l[arg]; }
-	
+
 	    // Return everything.
 	    if (arg === '{}') { return _l; }
-	
+
 	    // Default to undefined for no match.
 	    return undefined;
-	    
-	
-	
-	
+
+
+
+
 	    /*function isNumeric(arg) {
 	      return !isNaN(parseFloat(arg)) && isFinite(arg);
 	    }
-	
+
 	    function decode(str) {
 	      return decodeURIComponent(str.replace(/\+/g, ' '));
 	    }
-	    
+
 	    var _ls = url;
-	
+
 	    if (!url) { return undefined; }
 	    else if (!arg) { return _ls; }
 	    else { arg = arg.toString(); }
-	
+
 	    if (_ls.substring(0,2) === '//') { _ls = 'http:' + _ls; }
 	        else if (_ls.split('://').length === 1) { _ls = 'http://' + _ls; }
-	
+
 	        url = _ls.split('/');
 	        var _l = {auth:''}, host = url[2].split('@');
-	
+
 	        if (host.length === 1) { host = host[0].split(':'); }
 	        else { _l.auth = host[0]; host = host[1].split(':'); }
-	
+
 	        _l.protocol=url[0];
 	        _l.hostname=host[0];
 	        _l.port=(host[1] || ((_l.protocol.split(':')[0].toLowerCase() === 'https') ? '443' : '80'));
 	        _l.pathname=( (url.length > 3 ? '/' : '') + url.slice(3, url.length).join('/').split('?')[0].split('#')[0]);
 	        var _p = _l.pathname;
-	
+
 	        if (_p.charAt(_p.length-1) === '/') { _p=_p.substring(0, _p.length-1); }
 	        var _h = _l.hostname, _hs = _h.split('.'), _ps = _p.split('/');
-	
+
 	        if (arg === 'hostname') { return _h; }
 	        else if (arg === 'domain') {
 	            if (/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/.test(_h)) { return _h; }
-	            return _hs.slice(-2).join('.'); 
+	            return _hs.slice(-2).join('.');
 	        }
 	        //else if (arg === 'tld') { return _hs.slice(-1).join('.'); }
 	        else if (arg === 'sub') { return _hs.slice(0, _hs.length - 2).join('.'); }
@@ -3824,25 +3835,25 @@ _electron.app.on('ready', function () {
 	        else if (arg.charAt(0) === '?' || arg.charAt(0) === '#')
 	        {
 	            var params = _ls, param = null;
-	
+
 	            if(arg.charAt(0) === '?') { params = (params.split('?')[1] || '').split('#')[0]; }
 	            else if(arg.charAt(0) === '#') { params = (params.split('#')[1] || ''); }
-	
+
 	            if(!arg.charAt(1)) { return (params ? decode(params) : params); }
-	
+
 	            arg = arg.substring(1);
 	            params = params.split('&');
-	
+
 	            for(var i=0,ii=params.length; i<ii; i++)
 	            {
 	                param = params[i].split(/(.*?)=(.*)/).filter(Boolean);
-	
+
 	                if(param[0] === arg) { return (param[1] ? decode(param[1]) : param[1]) || ''; }
 	            }
-	
+
 	            return null;
 	        }
-	
+
 	    return '';*/
 	};
 
@@ -3857,13 +3868,13 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	
+
 	var _electron = __webpack_require__(14);
-	
+
 	/**
 	 * @param nativefierVersion
 	 * @param appQuit
@@ -3885,11 +3896,11 @@ _electron.app.on('ready', function () {
 	    var getCurrentUrl = _ref.getCurrentUrl;
 	    var clearAppData = _ref.clearAppData;
 	    var disableDevTools = _ref.disableDevTools;
-	
+
 	    if (_electron.Menu.getApplicationMenu()) {
 	        return;
 	    }
-	
+
 	    var template = [{
 	        label: 'Edit',
 	        submenu: [{
@@ -4031,13 +4042,13 @@ _electron.app.on('ready', function () {
 	            }
 	        }]
 	    }];
-	
+
 	    if (disableDevTools) {
 	        // remove last item (dev tools) from menu > view
 	        var submenu = template[1].submenu;
 	        submenu.splice(submenu.length - 1, 1);
 	    }
-	
+
 	    if (process.platform === 'darwin') {
 	        template.unshift({
 	            label: 'Electron',
@@ -4075,11 +4086,11 @@ _electron.app.on('ready', function () {
 	            role: 'front'
 	        });
 	    }
-	
+
 	    var menu = _electron.Menu.buildFromTemplate(template);
 	    _electron.Menu.setApplicationMenu(menu);
 	}
-	
+
 	exports.default = createMenu;
 
 /***/ },
@@ -4087,13 +4098,13 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	
+
 	var _electron = __webpack_require__(14);
-	
+
 	function initContextMenu(mainWindow) {
 	    _electron.ipcMain.on('contextMenuOpened', function (event, targetHref) {
 	        var contextMenuTemplate = [{
@@ -4111,18 +4122,18 @@ _electron.app.on('ready', function () {
 	                    new _electron.BrowserWindow().loadURL(targetHref);
 	                    return;
 	                }
-	
+
 	                mainWindow.useDefaultWindowBehaviour = true;
 	                mainWindow.webContents.send('contextMenuClosed');
 	            }
 	        }];
-	
+
 	        var contextMenu = _electron.Menu.buildFromTemplate(contextMenuTemplate);
 	        contextMenu.popup(mainWindow);
 	        mainWindow.contextMenuOpen = true;
 	    });
 	}
-	
+
 	exports.default = initContextMenu;
 
 /***/ },
@@ -4130,46 +4141,46 @@ _electron.app.on('ready', function () {
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	
+
 	var _fs = __webpack_require__(13);
-	
+
 	var _fs2 = _interopRequireDefault(_fs);
-	
+
 	var _path = __webpack_require__(12);
-	
+
 	var _path2 = _interopRequireDefault(_path);
-	
+
 	var _helpers = __webpack_require__(24);
-	
+
 	var _helpers2 = _interopRequireDefault(_helpers);
-	
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
+
 	var isOSX = _helpers2.default.isOSX;
 	var isWindows = _helpers2.default.isWindows;
 	var isLinux = _helpers2.default.isLinux;
-	
-	
+
+
 	function inferFlash() {
 	    if (isOSX()) {
 	        return darwinMatch();
 	    }
-	
+
 	    if (isWindows()) {
 	        return windowsMatch();
 	    }
-	
+
 	    if (isLinux()) {
 	        return linuxMatch();
 	    }
-	
+
 	    console.warn('Unable to determine OS to infer flash player');
 	}
-	
+
 	/**
 	 * Synchronously find a file or directory
 	 * @param {RegExp} pattern regex
@@ -4179,7 +4190,7 @@ _electron.app.on('ready', function () {
 	 */
 	function findSync(pattern, base, findDir) {
 	    var matches = [];
-	
+
 	    (function findSyncRecurse(base) {
 	        var children = void 0;
 	        try {
@@ -4190,12 +4201,12 @@ _electron.app.on('ready', function () {
 	            }
 	            throw exception;
 	        }
-	
+
 	        children.forEach(function (child) {
 	            var childPath = _path2.default.join(base, child);
 	            var childIsDirectory = _fs2.default.lstatSync(childPath).isDirectory();
 	            var patternMatches = pattern.test(childPath);
-	
+
 	            if (!patternMatches) {
 	                if (!childIsDirectory) {
 	                    return;
@@ -4203,12 +4214,12 @@ _electron.app.on('ready', function () {
 	                findSyncRecurse(childPath);
 	                return;
 	            }
-	
+
 	            if (!findDir) {
 	                matches.push(childPath);
 	                return;
 	            }
-	
+
 	            if (childIsDirectory) {
 	                matches.push(childPath);
 	            }
@@ -4216,19 +4227,19 @@ _electron.app.on('ready', function () {
 	    })(base);
 	    return matches;
 	}
-	
+
 	function linuxMatch() {
 	    return findSync(/libpepflashplayer\.so/, '/opt/google/chrome')[0];
 	}
-	
+
 	function windowsMatch() {
 	    return findSync(/pepflashplayer\.dll/, 'C:\\Program Files (x86)\\Google\\Chrome')[0];
 	}
-	
+
 	function darwinMatch() {
 	    return findSync(/PepperFlashPlayer.plugin/, '/Applications/Google Chrome.app/', true)[0];
 	}
-	
+
 	exports.default = inferFlash;
 
 /***/ },
@@ -4239,28 +4250,28 @@ _electron.app.on('ready', function () {
 	const path = __webpack_require__(12);
 	const electron = __webpack_require__(14);
 	const app = electron.app;
-	
+
 	module.exports = () => {
 		app.on('browser-window-created', (e, win) => {
 			win.webContents.session.on('will-download', (e, item) => {
 				const totalBytes = item.getTotalBytes();
 				const filePath = path.join(app.getPath('downloads'), item.getFilename());
-	
+
 				item.setSavePath(filePath);
-	
+
 				item.on('updated', () => {
 					win.setProgressBar(item.getReceivedBytes() / totalBytes);
 				});
-	
+
 				item.on('done', (e, state) => {
 					if (!win.isDestroyed()) {
 						win.setProgressBar(-1);
 					}
-	
+
 					if (state === 'interrupted') {
 						electron.dialog.showErrorBox('Download error', `The download of ${item.getFilename()} was interrupted`);
 					}
-	
+
 					if (state === 'completed') {
 						// TODO: remove the `app.dock.downloadFinished` check sometime in the future
 						if (process.platform === 'darwin' && app.dock.downloadFinished) {
