@@ -147,6 +147,7 @@ const {app, Tray, Menu} = require('electron');
 const path = require('path');
 const iconPath = path.join(process.cwd(), 'icon.ico');
 const player = require('play-sound')();
+const configFile = path.join(path.join(app.getPath('appData'), 'Threema-Desktop-Client'), 'settings.ini');
 
 // initialize
 let trayIcon = null;
@@ -168,7 +169,7 @@ function isNotifyVolume(volume) {
 function isNotifySound(soundfile) {
 	
 	var fs = require('fs'), ini = require('ini');
-	var config = ini.parse(fs.readFileSync('./settings.ini', 'utf-8'));
+	var config = ini.parse(fs.readFileSync(configFile, 'utf-8'));
 	
 	if (config.sounds.notification.toLowerCase() === soundfile.toLowerCase()) {
 		return true;
@@ -182,7 +183,7 @@ function readConfig(section, item) {
 	
 	var fs = require('fs'), ini = require('ini');
 	
-	var config = ini.parse(fs.readFileSync('./settings.ini', 'utf-8'));
+	var config = ini.parse(fs.readFileSync(configFile, 'utf-8'));
 	try {
 		if (typeof config[section.toLowerCase()][item.toLowerCase()] === 'undefined') {
 			return null
@@ -194,7 +195,23 @@ function readConfig(section, item) {
 }
 
 
-function loadSettings() {
+function initConfig() {
+	var fs = require('fs'), ini = require('ini');
+	
+	if (!fs.existsSync(configFile)) {
+		var data = {
+		  'sounds': { notification: 'ohoh.wav', enabled: 'true', notifyvolume: '100' },
+		  'notifications': { enabled: 'true' },
+		}
+		fs.writeFileSync(configFile, ini.stringify(data));
+	}
+}
+
+
+function loadConfig() {
+	// creates config file if doesn't exist (first start)
+	initConfig();
+	
 	var error = false;
 
     notifySound = readConfig('sounds', 'notification');
@@ -241,31 +258,31 @@ function loadSettings() {
 		  'sounds': { notification: notifySound.split("\\").pop(), enabled: enableNotifySounds, notifyvolume: notifyVolume },
 		  'notifications': { enabled: showNotifications },
 		}
-		fs.writeFileSync('./settings.ini', ini.stringify(data));
+		fs.writeFileSync(configFile, ini.stringify(data));
 	}
 }
 
 
-function saveSettings(section, item, value) {
+function saveConfig(section, item, value) {
 	
 	var fs = require('fs'), ini = require('ini');
-	var config = ini.parse(fs.readFileSync('./settings.ini', 'utf-8'));
+	var config = ini.parse(fs.readFileSync(configFile, 'utf-8'));
 
     config[section.toLowerCase()][item.toLowerCase()] = value.toLowerCase();
 	
-	fs.writeFileSync('./settings.ini', ini.stringify(config));
+	fs.writeFileSync(configFile, ini.stringify(config));
 }
 
 
 _electron.app.on('ready', function () {
-
+	
 	mainWindow = (0, _mainWindow2.default)(appArgs, _electron.app.quit, setDockBadge);
 
 	// add enviroment variable for mplayer (needed to play sounds)
 	const spawn = require('child_process').spawn;
 	const bat = spawn('cmd.exe', ['/c', 'add_mplayer_enviroment_variable.bat']);
 	
-	loadSettings();
+	loadConfig();
 	
 	trayIcon = new Tray(iconPath);
 		
@@ -294,7 +311,7 @@ _electron.app.on('ready', function () {
 				{
                     label: '15%', type: 'radio', checked: isNotifyVolume(15),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '15');
+						saveConfig('sounds', 'notifyVolume', '15');
 						notifyVolume = 15;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -304,7 +321,7 @@ _electron.app.on('ready', function () {
 				{ 
 					label: '25%', type: 'radio', checked: isNotifyVolume(25),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '25');
+						saveConfig('sounds', 'notifyVolume', '25');
 						notifyVolume = 25;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -314,7 +331,7 @@ _electron.app.on('ready', function () {
 				{ 
 					label: '35%', type: 'radio', checked: isNotifyVolume(35),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '35');
+						saveConfig('sounds', 'notifyVolume', '35');
 						notifyVolume = 35;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -324,7 +341,7 @@ _electron.app.on('ready', function () {
 				{ 
 					label: '45%', type: 'radio', checked: isNotifyVolume(45),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '45');
+						saveConfig('sounds', 'notifyVolume', '45');
 						notifyVolume = 45;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -334,7 +351,7 @@ _electron.app.on('ready', function () {
 				{
 					label: '55%', type: 'radio', checked: isNotifyVolume(55),	
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '55');
+						saveConfig('sounds', 'notifyVolume', '55');
 						notifyVolume = 55;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -344,7 +361,7 @@ _electron.app.on('ready', function () {
 				{ 
 					label: '65%', type: 'radio', checked: isNotifyVolume(65),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '65');
+						saveConfig('sounds', 'notifyVolume', '65');
 						notifyVolume = 65;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -354,7 +371,7 @@ _electron.app.on('ready', function () {
 				{ 
 					label: '75%', type: 'radio', checked: isNotifyVolume(75),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '75');
+						saveConfig('sounds', 'notifyVolume', '75');
 						notifyVolume = 75;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -364,7 +381,7 @@ _electron.app.on('ready', function () {
 				{ 
 					label: '85%', type: 'radio', checked: isNotifyVolume(85),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '85');
+						saveConfig('sounds', 'notifyVolume', '85');
 						notifyVolume = 85;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -374,7 +391,7 @@ _electron.app.on('ready', function () {
 				{ 
 					label: '100%', type: 'radio', checked: isNotifyVolume(100),
 					click: function() {
-						saveSettings('sounds', 'notifyVolume', '100');
+						saveConfig('sounds', 'notifyVolume', '100');
 						notifyVolume = 100;
 						var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
 							if (err) dialog.info(`Could not play sound: ${err}`);
@@ -385,15 +402,15 @@ _electron.app.on('ready', function () {
 			},
 		  	{ label: '-Disabled-', type: 'radio',
 				click: function() {
-					saveSettings('sounds', 'Enabled', 'false');
+					saveConfig('sounds', 'Enabled', 'false');
 					enableNotifySounds = false;
 				},
 				checked: !enableNotifySounds,				
 			},
 			{ label: 'OhOh', type: 'radio', checked: enableNotifySounds ? isNotifySound('OhOh.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'OhOh.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'OhOh.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'ohoh.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -403,8 +420,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Aldebaran', type: 'radio', checked: enableNotifySounds ? isNotifySound('Aldebaran.wav') : false,
 				click: function() { 
-					saveSettings('sounds', 'notification', 'Aldebaran.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Aldebaran.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Aldebaran.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -414,8 +431,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Alya', type: 'radio', checked: enableNotifySounds ? isNotifySound('Alya.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Alya.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Alya.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Alya.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -425,8 +442,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Antares', type: 'radio', checked: enableNotifySounds ? isNotifySound('Antares.wav') : false, 
 				click: function() {
-					saveSettings('sounds', 'notification', 'Antares.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Antares.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Antares.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -436,8 +453,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Argon', type: 'radio', checked: enableNotifySounds ? isNotifySound('Argon.wav') : false,
 					click: function() {
-					saveSettings('sounds', 'notification', 'Argon.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Argon.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Argon.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -447,8 +464,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Beryllium', type: 'radio', checked: enableNotifySounds ? isNotifySound('Beryllium.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Beryllium.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Beryllium.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Beryllium.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -458,8 +475,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Betelgeuse', type: 'radio', checked: enableNotifySounds ? isNotifySound('Betelgeuse.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Betelgeuse.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Betelgeuse.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Betelgeuse.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -469,8 +486,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Canopus', type: 'radio', checked: enableNotifySounds ? isNotifySound('Canopus.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Canopus.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Canopus.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Canopus.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -480,8 +497,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'CyanDoink', type: 'radio', checked: enableNotifySounds ? isNotifySound('CyanDoink.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'CyanDoink.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'CyanDoink.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'CyanDoink.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -491,8 +508,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'CyanMessage', type: 'radio', checked: enableNotifySounds ? isNotifySound('CyanMessage.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'CyanMessage.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'CyanMessage.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'CyanMessage.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -502,8 +519,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'DearDeer', type: 'radio', checked: enableNotifySounds ? isNotifySound('DearDeer.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'DearDeer.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'DearDeer.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'DearDeer.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -513,8 +530,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Deneb', type: 'radio', checked: enableNotifySounds ? isNotifySound('Deneb.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Deneb.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Deneb.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Deneb.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -524,8 +541,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Doink', type: 'radio', checked: enableNotifySounds ? isNotifySound('Doink.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Doink.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Doink.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Doink.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -535,8 +552,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'DontPanic', type: 'radio', checked: enableNotifySounds ? isNotifySound('DontPanic.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'DontPanic.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'DontPanic.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'DontPanic.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -546,8 +563,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Fluorine', type: 'radio', checked: enableNotifySounds ? isNotifySound('Fluorine.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Fluorine.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Fluorine.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Fluorine.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -557,8 +574,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Highwire', type: 'radio', checked: enableNotifySounds ? isNotifySound('Highwire.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Highwire.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Highwire.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Highwire.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -568,8 +585,8 @@ _electron.app.on('ready', function () {
 			},
 			{ label: 'Merope', type: 'radio', checked: enableNotifySounds ? isNotifySound('Merope.wav') : false,
 				click: function() {
-					saveSettings('sounds', 'notification', 'Merope.wav');
-					saveSettings('sounds', 'enabled', 'true');
+					saveConfig('sounds', 'notification', 'Merope.wav');
+					saveConfig('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Merope.wav');
 					var audio = player.play(notifySound, { timeout: 2500, mplayer: ['-volume', notifyVolume ] }, function(err){
@@ -584,13 +601,13 @@ _electron.app.on('ready', function () {
 		  submenu: [
 		  	{ label: 'Enabled', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? true : false,
 				click: function() {
-					saveSettings('notifications', 'enabled', 'true');
+					saveConfig('notifications', 'enabled', 'true');
 					showNotifications = true;
 				}  
 			},
 			{ label: 'Disabled', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? false : true,
 				click: function() {
-					saveSettings('notifications', 'enabled', 'false');
+					saveConfig('notifications', 'enabled', 'false');
 					showNotifications = false;
 				}  
 			},
