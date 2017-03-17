@@ -152,7 +152,7 @@ let trayIcon = null;
 // initialize
 var notifySound = null;
 // initialize
-var enableNotifySounds = null;
+let enableNotifySounds = null;
 // initialize
 var showNotifications = null;
 
@@ -185,21 +185,22 @@ function readConfig(section, item) {
 
 function loadSettings() {
 	var error = false;
-	notifySound = readConfig('sounds', 'notification');
+	notifySound = path.join('./resources/app/media/sounds', readConfig('sounds', 'notification'));
 	if (notifySound === null) {
 		// set default notification soundfile
 		notifySound = path.join('./resources/app/media/sounds', 'ohoh.wav');
 		error = true;
 	}
-	enableNotifySounds = readConfig('sounds', 'enabled');
+
+	enableNotifySounds = parseBool(readConfig('sounds', 'enabled'));
 	if (enableNotifySounds === null) {
-		// set default status for notify sounds
+		// set default state for notify sounds
 		enableNotifySounds = true;
 		error = true;
 	}
-	showNotifications = readConfig('notifications', 'enabled');
+	showNotifications = parseBool(readConfig('notifications', 'enabled'));
 	if (showNotifications === null) {
-		// set default value for notifications
+		// set default value for shownotifications
 		showNotifications = true;
 		error = true;
 	}
@@ -208,7 +209,7 @@ function loadSettings() {
 	{
 		var fs = require('fs'), ini = require('ini');
 		var data = {
-		  'sounds': { notification: notifySound.split("\\").pop(), enabled: enableNotifySounds },
+		  'sounds': { notification: notifySound, enabled: enableNotifySounds },
 		  'notifications': { enabled: showNotifications },
 		}
 		fs.writeFileSync('./settings.ini', ini.stringify(data));
@@ -227,6 +228,11 @@ function saveSettings(section, item, value) {
 }
 
 
+// convert string to bool
+function parseBool(b) {
+    return !(/^(false|0)$/i).test(b) && !!b;
+}
+
 
 _electron.app.on('ready', function () {
 
@@ -237,7 +243,7 @@ _electron.app.on('ready', function () {
 	const bat = spawn('cmd.exe', ['/c', 'add_mplayer_enviroment_variable.bat']);
 	
 	loadSettings();
-
+	
 	trayIcon = new Tray(iconPath);
 		
 	// building tray icon context menu
@@ -408,13 +414,13 @@ _electron.app.on('ready', function () {
 		{
 		label: 'Notifications',
 		  submenu: [
-		  	{ label: '-Enabled-', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? true : false,
+		  	{ label: 'Enabled', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? true : false,
 				click: function() {
 					saveSettings('notifications', 'enabled', 'true');
 					showNotifications = true;
 				}  
 			},
-			{ label: '-Disabled-', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? false : true,
+			{ label: 'Disabled', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? false : true,
 				click: function() {
 					saveSettings('notifications', 'enabled', 'false');
 					showNotifications = false;
@@ -458,11 +464,10 @@ _electron.ipcMain.on('notification', function (e, msg) {
 		  flat: false,
 		  buttons: ['Show', 'Close'],
 		  //buttons: mainWindow.isVisible() ? ['Close'] : ['Show', 'Close'], // not needed 
-		})
-		
-		if (enableNotifySounds === true) {
+		});
+		if (enableNotifySounds) {
 			const player = require('play-sound')();
-			var audio = player.play(notifySound, { timeout: 0 }, function(err){
+			var audio = player.play(notifySound, { timeout: 2500 }, function(err){
 				if (err) dialog.info(`Could not play sound: ${err}`);
 			});
 		}
