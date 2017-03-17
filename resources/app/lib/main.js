@@ -152,7 +152,7 @@ let trayIcon = null;
 // initialize
 var notifySound = null;
 // initialize
-let enableNotifySounds = null;
+var enableNotifySounds = null;
 // initialize
 var showNotifications = null;
 
