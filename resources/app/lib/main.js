@@ -146,6 +146,7 @@ const dialog = require('dialog');
 const {app, Tray, Menu} = require('electron');
 const path = require('path');
 const iconPath = path.join(process.cwd(), 'icon.ico');
+const player = require('play-sound')();
 
 // initialize
 let trayIcon = null;
@@ -279,6 +280,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'ohoh.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Aldebaran', type: 'radio', checked: enableNotifySounds ? isNotifySound('Aldebaran.wav') : false,
@@ -287,6 +291,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Aldebaran.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}
 			},
 			{ label: 'Alya', type: 'radio', checked: enableNotifySounds ? isNotifySound('Alya.wav') : false,
@@ -295,6 +302,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Alya.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Antares', type: 'radio', checked: enableNotifySounds ? isNotifySound('Antares.wav') : false, 
@@ -303,6 +313,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Antares.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Argon', type: 'radio', checked: enableNotifySounds ? isNotifySound('Argon.wav') : false,
@@ -311,6 +324,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Argon.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Beryllium', type: 'radio', checked: enableNotifySounds ? isNotifySound('Beryllium.wav') : false,
@@ -319,6 +335,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Beryllium.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Betelgeuse', type: 'radio', checked: enableNotifySounds ? isNotifySound('Betelgeuse.wav') : false,
@@ -327,6 +346,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Betelgeuse.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Canopus', type: 'radio', checked: enableNotifySounds ? isNotifySound('Canopus.wav') : false,
@@ -335,6 +357,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Canopus.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'CyanDoink', type: 'radio', checked: enableNotifySounds ? isNotifySound('CyanDoink.wav') : false,
@@ -343,6 +368,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'CyanDoink.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'CyanMessage', type: 'radio', checked: enableNotifySounds ? isNotifySound('CyanMessage.wav') : false,
@@ -351,6 +379,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'CyanMessage.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'DearDeer', type: 'radio', checked: enableNotifySounds ? isNotifySound('DearDeer.wav') : false,
@@ -359,6 +390,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'DearDeer.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Deneb', type: 'radio', checked: enableNotifySounds ? isNotifySound('Deneb.wav') : false,
@@ -367,6 +401,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Deneb.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Doink', type: 'radio', checked: enableNotifySounds ? isNotifySound('Doink.wav') : false,
@@ -375,6 +412,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Doink.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'DontPanic', type: 'radio', checked: enableNotifySounds ? isNotifySound('DontPanic.wav') : false,
@@ -383,6 +423,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'DontPanic.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Fluorine', type: 'radio', checked: enableNotifySounds ? isNotifySound('Fluorine.wav') : false,
@@ -391,6 +434,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Fluorine.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Highwire', type: 'radio', checked: enableNotifySounds ? isNotifySound('Highwire.wav') : false,
@@ -399,6 +445,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Highwire.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			{ label: 'Merope', type: 'radio', checked: enableNotifySounds ? isNotifySound('Merope.wav') : false,
@@ -407,6 +456,9 @@ _electron.app.on('ready', function () {
 					saveSettings('sounds', 'enabled', 'true');
 					enableNotifySounds = true;
 					notifySound = path.join('./resources/app/media/sounds', 'Merope.wav');
+					var audio = player.play(notifySound, { timeout: 2500 }, function(err){
+						if (err) dialog.info(`Could not play sound: ${err}`);
+					});
 				}  
 			},
 			]
@@ -444,7 +496,7 @@ _electron.app.on('ready', function () {
 	});
 	
     // set caption of tray icon tooltip
-	trayIcon.setToolTip('Threema Web Client v1.0');
+	trayIcon.setToolTip('Threema Desktop Client');
 	trayIcon.setContextMenu(contextMenu);
 	
     //mainWindow.openDevTools();	
@@ -466,7 +518,6 @@ _electron.ipcMain.on('notification', function (e, msg) {
 		  //buttons: mainWindow.isVisible() ? ['Close'] : ['Show', 'Close'], // not needed 
 		});
 		if (enableNotifySounds) {
-			const player = require('play-sound')();
 			var audio = player.play(notifySound, { timeout: 2500 }, function(err){
 				if (err) dialog.info(`Could not play sound: ${err}`);
 			});
