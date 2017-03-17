@@ -3131,8 +3131,8 @@ _electron.app.on('login', function (event, webContents, request, authInfo, callb
 	    var _this = this;
 
 	    var mainWindowState = (0, _electronWindowState2.default)({
-	        defaultWidth: options.width || 1280,
-	        defaultHeight: options.height || 800
+	        defaultWidth: options.width || 1024,
+	        defaultHeight: options.height || 768
 	    });
 
 	    var mainWindow = new _electron.BrowserWindow({
