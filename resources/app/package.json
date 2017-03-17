@@ -1,6 +1,6 @@
 {
-  "name": "threema-nativefier-4e4a30",
-  "version": "1.0.0",
+  "name": "Threema-Desktop-Client",
+  "version": "1.0.2",
   "description": "Placeholder for the nativefier cli to override with a target url",
   "main": "lib/main.js",
   "dependencies": {
