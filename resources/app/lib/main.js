@@ -136,21 +136,111 @@
 	    }
 	});
 
+	
+	// original function created by nativefier
 	//_electron.app.on('ready', function () {
 	//   mainWindow = (0, _mainWindow2.default)(appArgs, _electron.app.quit, setDockBadge);
 	//});
 
+const dialog = require('dialog');
 const {app, Tray, Menu} = require('electron');
 const path = require('path');
-const iconPath = path.join(__dirname, 'icon.ico');
-let appIcon = null;
+const iconPath = path.join(process.cwd(), 'icon.ico');
+
+// initialize
+let trayIcon = null;
+// initialize
+var notifySound = null;
+// initialize
+var enableNotifySounds = null;
+// initialize
+var showNotifications = null;
+
+
+function isNotifySound(soundfile) {
+	
+	var fs = require('fs'), ini = require('ini');
+	var config = ini.parse(fs.readFileSync('./settings.ini', 'utf-8'));
+	
+	if (config.sounds.notification.toLowerCase() === soundfile.toLowerCase()) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+function readConfig(section, item) {
+	
+	var fs = require('fs'), ini = require('ini');
+	
+	var config = ini.parse(fs.readFileSync('./settings.ini', 'utf-8'));
+	try {
+		return config[section.toLowerCase()][item.toLowerCase()];
+	} catch (err) {
+		return null;
+	}
+}
+
+
+function loadSettings() {
+	var error = false;
+	notifySound = readConfig('sounds', 'notification');
+	if (notifySound === null) {
+		// set default notification soundfile
+		notifySound = path.join('./resources/app/media/sounds', 'ohoh.wav');
+		error = true;
+	}
+	enableNotifySounds = readConfig('sounds', 'enabled');
+	if (enableNotifySounds === null) {
+		// set default status for notify sounds
+		enableNotifySounds = true;
+		error = true;
+	}
+	showNotifications = readConfig('notifications', 'enabled');
+	if (showNotifications === null) {
+		// set default value for notifications
+		showNotifications = true;
+		error = true;
+	}
+	// repair settings file if broken
+	if (error === true)
+	{
+		var fs = require('fs'), ini = require('ini');
+		var data = {
+		  'sounds': { notification: notifySound.split("\\").pop(), enabled: enableNotifySounds },
+		  'notifications': { enabled: showNotifications },
+		}
+		fs.writeFileSync('./settings.ini', ini.stringify(data));
+	}
+}
+
+
+function saveSettings(section, item, value) {
+	
+	var fs = require('fs'), ini = require('ini');
+	var config = ini.parse(fs.readFileSync('./settings.ini', 'utf-8'));
+
+    config[section.toLowerCase()][item.toLowerCase()] = value.toLowerCase();
+	
+	fs.writeFileSync('./settings.ini', ini.stringify(config));
+}
+
 
 
 _electron.app.on('ready', function () {
 
 	mainWindow = (0, _mainWindow2.default)(appArgs, _electron.app.quit, setDockBadge);
 
-	appIcon = new Tray(iconPath);
+	// add enviroment variable for mplayer (needed to play sounds)
+	const spawn = require('child_process').spawn;
+	const bat = spawn('cmd.exe', ['/c', 'add_mplayer_enviroment_variable.bat']);
+	
+	loadSettings();
+
+	trayIcon = new Tray(iconPath);
+		
+	// building tray icon context menu
 	var contextMenu = Menu.buildFromTemplate([
 	{
 	  label: 'Show',
@@ -165,6 +255,176 @@ _electron.app.on('ready', function () {
 	  }
 	},
 	{
+	label: 'Settings',
+      submenu: [
+		{   
+		label: 'Sounds',
+		  submenu: [
+		  	{ label: '-Disabled-', type: 'radio',
+				click: function() {
+					saveSettings('sounds', 'Enabled', 'false');
+					enableNotifySounds = false;
+				},
+				checked: !enableNotifySounds,				
+			},
+			{ label: 'OhOh', type: 'radio', checked: enableNotifySounds ? isNotifySound('OhOh.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'OhOh.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'ohoh.wav');
+				}  
+			},
+			{ label: 'Aldebaran', type: 'radio', checked: enableNotifySounds ? isNotifySound('Aldebaran.wav') : false,
+				click: function() { 
+					saveSettings('sounds', 'notification', 'Aldebaran.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Aldebaran.wav');
+				}
+			},
+			{ label: 'Alya', type: 'radio', checked: enableNotifySounds ? isNotifySound('Alya.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Alya.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Alya.wav');
+				}  
+			},
+			{ label: 'Antares', type: 'radio', checked: enableNotifySounds ? isNotifySound('Antares.wav') : false, 
+				click: function() {
+					saveSettings('sounds', 'notification', 'Antares.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Antares.wav');
+				}  
+			},
+			{ label: 'Argon', type: 'radio', checked: enableNotifySounds ? isNotifySound('Argon.wav') : false,
+					click: function() {
+					saveSettings('sounds', 'notification', 'Argon.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Argon.wav');
+				}  
+			},
+			{ label: 'Beryllium', type: 'radio', checked: enableNotifySounds ? isNotifySound('Beryllium.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Beryllium.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Beryllium.wav');
+				}  
+			},
+			{ label: 'Betelgeuse', type: 'radio', checked: enableNotifySounds ? isNotifySound('Betelgeuse.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Betelgeuse.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Betelgeuse.wav');
+				}  
+			},
+			{ label: 'Canopus', type: 'radio', checked: enableNotifySounds ? isNotifySound('Canopus.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Canopus.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Canopus.wav');
+				}  
+			},
+			{ label: 'CyanDoink', type: 'radio', checked: enableNotifySounds ? isNotifySound('CyanDoink.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'CyanDoink.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'CyanDoink.wav');
+				}  
+			},
+			{ label: 'CyanMessage', type: 'radio', checked: enableNotifySounds ? isNotifySound('CyanMessage.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'CyanMessage.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'CyanMessage.wav');
+				}  
+			},
+			{ label: 'DearDeer', type: 'radio', checked: enableNotifySounds ? isNotifySound('DearDeer.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'DearDeer.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'DearDeer.wav');
+				}  
+			},
+			{ label: 'Deneb', type: 'radio', checked: enableNotifySounds ? isNotifySound('Deneb.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Deneb.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Deneb.wav');
+				}  
+			},
+			{ label: 'Doink', type: 'radio', checked: enableNotifySounds ? isNotifySound('Doink.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Doink.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Doink.wav');
+				}  
+			},
+			{ label: 'DontPanic', type: 'radio', checked: enableNotifySounds ? isNotifySound('DontPanic.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'DontPanic.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'DontPanic.wav');
+				}  
+			},
+			{ label: 'Fluorine', type: 'radio', checked: enableNotifySounds ? isNotifySound('Fluorine.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Fluorine.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Fluorine.wav');
+				}  
+			},
+			{ label: 'Highwire', type: 'radio', checked: enableNotifySounds ? isNotifySound('Highwire.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Highwire.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Highwire.wav');
+				}  
+			},
+			{ label: 'Merope', type: 'radio', checked: enableNotifySounds ? isNotifySound('Merope.wav') : false,
+				click: function() {
+					saveSettings('sounds', 'notification', 'Merope.wav');
+					saveSettings('sounds', 'enabled', 'true');
+					enableNotifySounds = true;
+					notifySound = path.join('./resources/app/media/sounds', 'Merope.wav');
+				}  
+			},
+			]
+		},
+		{
+		label: 'Notifications',
+		  submenu: [
+		  	{ label: '-Enabled-', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? true : false,
+				click: function() {
+					saveSettings('notifications', 'enabled', 'true');
+					showNotifications = true;
+				}  
+			},
+			{ label: '-Disabled-', type: 'radio', checked: Boolean(readConfig('notifications', 'enabled')) ? false : true,
+				click: function() {
+					saveSettings('notifications', 'enabled', 'false');
+					showNotifications = false;
+				}  
+			},
+			]
+		},
+	  ]
+	},
+	{
 	  label: 'Quit',
 	  click: function() {
 		_electron.app.exit(0);
@@ -172,30 +432,41 @@ _electron.app.on('ready', function () {
 	}
 	]);
 
-	appIcon.on('double-click', () => {
+	// tray icon double-click event
+	trayIcon.on('double-click', () => {
 		mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show()
 	});
-
-	appIcon.setToolTip('Threema Web Client v1.0');
-	appIcon.setContextMenu(contextMenu);
-    //mainWindow.openDevTools();
+	
+    // set caption of tray icon tooltip
+	trayIcon.setToolTip('Threema Web Client v1.0');
+	trayIcon.setContextMenu(contextMenu);
+	
+    //mainWindow.openDevTools();	
 });
 
 
 	
 _electron.ipcMain.on('notification', function (e, msg) {
 
-	if (!isOSX() || mainWindow.isFocused()) {
+	if (!isOSX() && !mainWindow.isVisible() && showNotifications) {
 		const notifier = require('electron-notifications')
 		  var msg = msg.replace(/Threema/i, '');
 		  const notification = notifier.notify('', {
 		  message: msg,
 		  icon: iconPath,
-		  duration: "30000",
+		  duration: "8000",
 		  flat: false,
-		  buttons: mainWindow.isVisible() ? ['Close'] : ['Show', 'Close'],	  
+		  buttons: ['Show', 'Close'],
+		  //buttons: mainWindow.isVisible() ? ['Close'] : ['Show', 'Close'], // not needed 
 		})
 		
+		if (enableNotifySounds === true) {
+			const player = require('play-sound')();
+			var audio = player.play(notifySound, { timeout: 0 }, function(err){
+				if (err) dialog.info(`Could not play sound: ${err}`);
+			});
+		}
+			
 		notification.on('buttonClicked', (text, buttonIndex, options) => {	
 			if (text === 'Show') {
 				if (!mainWindow.isVisible()) {
@@ -207,11 +478,11 @@ _electron.ipcMain.on('notification', function (e, msg) {
 				notification.close()	
 			}
 		})
-		return;
 	}
-	setDockBadge('●');
+	if (isOSX()) {
+		setDockBadge('●');
+	}
 });
-
 
 
 _electron.app.on('login', function (event, webContents, request, authInfo, callback) {
